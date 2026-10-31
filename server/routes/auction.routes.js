@@ -4,6 +4,9 @@ import {
   showAuction,
   auctionById,
   placeBid,
+  buyAuction,
+  toggleWatch,
+  watchlist,
   dashboardData,
   myAuction,
   myBids,
@@ -22,8 +25,11 @@ auctionRoutes
 
 auctionRoutes.get("/myauction", myAuction);
 auctionRoutes.get("/mybids", myBids);
+auctionRoutes.get("/watchlist", watchlist);
 
 auctionRoutes.get("/:id", auctionById);
 auctionRoutes.post("/:id/bid", placeBid);
+auctionRoutes.post("/:id/buy", buyAuction);
+auctionRoutes.post("/:id/watch", toggleWatch);
 
 export default auctionRoutes;

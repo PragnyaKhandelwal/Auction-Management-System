@@ -4,5 +4,6 @@ import auctionRoutes from "./auction.routes.js";
 import contactRoutes from "./contact.routes.js";
 import adminRoutes from "./admin.routes.js";
 import cloudinaryRoutes from "./cloudinary.routes.js";
+import notificationRoutes from "./notification.routes.js";
 
-export { authRoutes, userRoutes, auctionRoutes, contactRoutes, adminRoutes, cloudinaryRoutes };
+export { authRoutes, userRoutes, auctionRoutes, contactRoutes, adminRoutes, cloudinaryRoutes, notificationRoutes };

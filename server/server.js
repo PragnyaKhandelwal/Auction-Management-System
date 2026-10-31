@@ -3,6 +3,10 @@ import { app } from "./app.js";
 import { env } from "./config/env.config.js";
 import { connectDB, disconnectDB } from "./config/db.config.js";
 import { initSocket } from "./socket/index.js";
+import {
+  startSettlementWorker,
+  stopSettlementWorker,
+} from "./jobs/settleAuctions.js";
 
 const PORT = env.port;
 
@@ -14,6 +18,7 @@ const startServer = async () => {
     await connectDB();
     server = http.createServer(app);
     initSocket(server);
+    startSettlementWorker();
 
     server.listen(PORT, () => {
       console.log(
@@ -41,6 +46,7 @@ const gracefulShutdown = async (signal) => {
   if (isShuttingDown) return;
   isShuttingDown = true;
   console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+  stopSettlementWorker();
 
   if (server && server.listening) {
     server.close(async (err) => {
