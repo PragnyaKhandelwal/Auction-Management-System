@@ -14,6 +14,12 @@ export const getAdminDashboard = async () => {
     }
 };
 
+// Get shill-bidding signals for review
+export const getFairPlayReport = async () => {
+    const res = await api.get(`/admin/fair-play`);
+    return res.data;
+};
+
 // Get all users with pagination and filtering
 export const getAllUsers = async (page = 1, search = '', role = 'all', limit = 10, sortBy = 'createdAt', sortOrder = 'desc') => {
     try {

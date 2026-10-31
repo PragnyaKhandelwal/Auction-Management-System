@@ -30,11 +30,11 @@ const statConfig = [
   {
     key: "totalAuctions",
     label: "Total Auctions",
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
+    color: "text-brand-600",
+    bg: "bg-brand-50",
     icon: (
       <svg
-        className="w-5 h-5 text-indigo-500"
+        className="w-5 h-5 text-brand-500"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -155,9 +155,16 @@ export const AdminDashboard = () => {
               Manage auctions, users, and monitor activity
             </p>
           </div>
+          <div className="flex items-center gap-2">
+          <Link
+            to="/admin/fair-play"
+            className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-semibold px-5 py-2.5 rounded-xl hover:border-brand-300 hover:text-brand-600 transition-all"
+          >
+            Fair Play Monitor
+          </Link>
           <Link
             to="/admin/users"
-            className="hidden sm:inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 active:scale-[0.97] transition-all shadow-sm shadow-indigo-200"
+            className="hidden sm:inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 active:scale-[0.97] transition-all shadow-sm shadow-brand-200"
           >
             <svg
               className="w-4 h-4"
@@ -174,6 +181,7 @@ export const AdminDashboard = () => {
             </svg>
             All Users
           </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -211,7 +219,7 @@ export const AdminDashboard = () => {
               </h2>
               <Link
                 to="/auction"
-                className="text-sm font-medium text-indigo-500 hover:text-indigo-600 transition"
+                className="text-sm font-medium text-brand-500 hover:text-brand-600 transition"
               >
                 View all &rarr;
               </Link>
@@ -242,7 +250,7 @@ export const AdminDashboard = () => {
             </h2>
             <Link
               to="/admin/users"
-              className="text-sm font-medium text-indigo-500 hover:text-indigo-600 transition"
+              className="text-sm font-medium text-brand-500 hover:text-brand-600 transition"
             >
               View all &rarr;
             </Link>
@@ -283,7 +291,7 @@ export const AdminDashboard = () => {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center shrink-0">
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-400 to-violet-500 flex items-center justify-center shrink-0">
                               <span className="text-xs font-semibold text-white">
                                 {user.name.charAt(0).toUpperCase()}
                               </span>
