@@ -2,8 +2,35 @@ import axios from "axios";
 import { api } from "../config/api.js";
 
 // getting list of all auction
-export const getAuctions = async ({ page = 1, limit = 12 } = {}) => {
-  const res = await api.get(`/auction?page=${page}&limit=${limit}`);
+export const getAuctions = async ({
+  page = 1,
+  limit = 12,
+  q = "",
+  category = "",
+  format = "",
+  sort = "newest",
+} = {}) => {
+  const res = await api.get(`/auction`, {
+    params: { page, limit, q, category, format, sort },
+  });
+  return res.data;
+};
+
+// getting list of auctions the user is watching
+export const getWatchlist = async ({ page = 1, limit = 12 } = {}) => {
+  const res = await api.get(`/auction/watchlist?page=${page}&limit=${limit}`);
+  return res.data;
+};
+
+// add to or remove from watchlist
+export const toggleWatch = async (id) => {
+  const res = await api.post(`/auction/${id}/watch`);
+  return res.data;
+};
+
+// Buy Now (English) or accept the live price (Dutch)
+export const buyAuction = async (id) => {
+  const res = await api.post(`/auction/${id}/buy`);
   return res.data;
 };
 
@@ -26,8 +53,8 @@ export const viewAuction = async (id) => {
 };
 
 // placing bid for auction
-export const placeBid = async ({ bidAmount, id }) => {
-  const res = await api.post(`/auction/${id}/bid`, { bidAmount });
+export const placeBid = async ({ bidAmount, maxBid, id }) => {
+  const res = await api.post(`/auction/${id}/bid`, { bidAmount, maxBid });
   return res.data;
 };
 
@@ -38,8 +65,16 @@ export const createAuction = async (data) => {
     startingPrice: data.startingPrice,
     itemDescription: data.itemDescription,
     itemCategory: data.itemCategory,
-    itemStartDate: data.itemStartDate,
-    itemEndDate: data.itemEndDate,
+    itemStartDate: data.itemStartDate
+      ? new Date(data.itemStartDate).toISOString()
+      : undefined,
+    itemEndDate: new Date(data.itemEndDate).toISOString(),
+    format: data.format,
+    reservePrice: data.reservePrice,
+    buyNowPrice: data.buyNowPrice,
+    dutchFloor: data.dutchFloor,
+    dutchDropAmount: data.dutchDropAmount,
+    dutchDropMinutes: data.dutchDropMinutes,
     formId: data.formId,
     public_id: data.public_id,
     secure_url: data.secure_url,

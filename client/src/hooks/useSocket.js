@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { connectSocket } from "../config/socket.js";
 import toast from "react-hot-toast";
+import { formatRs } from "../utils/auction.js";
 
 export const useSocket = (auctionId, currentUserId) => {
   const [activeUsers, setActiveUsers] = useState([]);
@@ -38,13 +39,29 @@ export const useSocket = (auctionId, currentUserId) => {
       }
     };
 
-    const handleBidPlaced = ({ auction, bidderName, bidAmount, bidderId }) => {
-      setLiveAuction(auction);
+    const handleBidPlaced = ({
+      auction,
+      bidderName,
+      bidAmount,
+      bidderId,
+      silent,
+    }) => {
+      setLiveAuction((previous) => {
+        if (
+          previous &&
+          new Date(auction.itemEndDate) > new Date(previous.itemEndDate)
+        ) {
+          toast("Late bid: time extended to stop sniping", { icon: "⏱️" });
+        }
+        return auction;
+      });
       // Only show "X placed a bid" for OTHER users, not yourself
-      if (bidderName && bidderId !== currentUserId) {
-        toast.success(`${bidderName} placed a bid of Rs ${bidAmount}`);
+      if (!silent && bidderName && bidderId !== currentUserId) {
+        toast.success(`${bidderName} bid. Price is now ${formatRs(bidAmount)}`);
       }
     };
+
+    const handleSettled = ({ auction }) => setLiveAuction(auction);
 
     const handleError = ({ message }) => {
       setSocketError(message);
@@ -67,6 +84,7 @@ export const useSocket = (auctionId, currentUserId) => {
     socket.on("auction:userJoined", handleUserJoined);
     socket.on("auction:userLeft", handleUserLeft);
     socket.on("auction:bidPlaced", handleBidPlaced);
+    socket.on("auction:settled", handleSettled);
     socket.on("auction:error", handleError);
     socket.on("disconnect", handleDisconnect);
 
@@ -84,6 +102,7 @@ export const useSocket = (auctionId, currentUserId) => {
       socket.off("auction:userJoined", handleUserJoined);
       socket.off("auction:userLeft", handleUserLeft);
       socket.off("auction:bidPlaced", handleBidPlaced);
+      socket.off("auction:settled", handleSettled);
       socket.off("auction:error", handleError);
       socket.off("disconnect", handleDisconnect);
       joinedRef.current = false;

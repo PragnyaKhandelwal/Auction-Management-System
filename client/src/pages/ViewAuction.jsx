@@ -1,19 +1,20 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useSelector } from "react-redux";
-import { useViewAuction, usePlaceBid } from "../hooks/useAuction.js";
+import { useViewAuction, useToggleWatch } from "../hooks/useAuction.js";
 import { useSocket } from "../hooks/useSocket.js";
 import LoadingScreen from "../components/LoadingScreen.jsx";
-import toast from "react-hot-toast";
+import { BidPanel } from "../components/BidPanel.jsx";
+import { PriceChart } from "../components/PriceChart.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { FORMATS, dutchPriceAt, formatRs } from "../utils/auction.js";
+import { IoHeart, IoHeartOutline } from "react-icons/io5";
 
 export const ViewAuction = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const currentUserId = user?.user?._id;
-  const inputRef = useRef();
-  const [bidding, setBidding] = useState(false);
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
@@ -21,14 +22,15 @@ export const ViewAuction = () => {
     seconds: 0,
   });
 
-  const { data: fetchedData, isLoading } = useViewAuction(id);
-  const { mutateAsync: placeBidMutation } = usePlaceBid();
+  const { data: fetchedData, isLoading, error } = useViewAuction(id);
+  const { mutate: toggleWatch } = useToggleWatch(id);
   const { activeUsers, liveAuction, socketError, isConnected } = useSocket(
     id,
     currentUserId,
   );
 
-  const data = liveAuction || fetchedData;
+  // Broadcasts are public, so the viewer's private fields come from the fetch
+  const data = liveAuction ? { ...fetchedData, ...liveAuction } : fetchedData;
   useDocumentTitle(data?.itemName ? data.itemName : "Auction Details");
 
   // Live countdown timer — must be called before any early return to satisfy Rules of Hooks
@@ -48,35 +50,36 @@ export const ViewAuction = () => {
     return () => clearInterval(interval);
   }, [data?.itemEndDate]);
 
+  if (error) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4 text-center">
+        <p className="text-gray-500">
+          {error.response?.data?.message || "This auction could not be loaded."}
+        </p>
+      </div>
+    );
+  }
+
   if (isLoading || !data) return <LoadingScreen />;
 
-  const handleBidSubmit = async (e) => {
-    e.preventDefault();
-    const bidAmount = e.target.bidAmount.value.trim();
-    if (!bidAmount) return;
-
-    setBidding(true);
-    try {
-      await placeBidMutation({ bidAmount: Number(bidAmount), id });
-      toast.success("Bid placed successfully!");
-      if (inputRef.current) inputRef.current.value = "";
-    } catch (err) {
-      const msg = err.response?.data?.message || "Failed to place bid";
-      toast.error(msg);
-    } finally {
-      setBidding(false);
-    }
-  };
-
   const timeLeft = Math.max(0, new Date(data.itemEndDate) - new Date());
-  const isActive = timeLeft > 0;
+  const isActive = timeLeft > 0 && !data.settledAt;
   const isSeller = data.seller._id === currentUserId;
   const winnerData = data.winner;
+  const format = FORMATS[data.format] || FORMATS.english;
+  const isSealed = data.format === "sealed";
+  const isDutch = data.format === "dutch";
+  const sealedHidden = isSealed && !data.settledAt;
+  const shownPrice = isDutch && isActive ? dutchPriceAt(data) : data.currentPrice;
+  const leaderId = winnerData?._id ?? data.highBidder;
+  const leaderRow = data.bids.findIndex(
+    (b) => b.bidder?._id && b.bidder._id === leaderId,
+  );
 
   const otherUsers = activeUsers.filter((u) => u.userId !== currentUserId);
 
   const avatarColors = [
-    "bg-indigo-100 text-indigo-600",
+    "bg-brand-100 text-brand-600",
     "bg-rose-100 text-rose-600",
     "bg-amber-100 text-amber-700",
     "bg-teal-100 text-teal-600",
@@ -91,11 +94,23 @@ export const ViewAuction = () => {
   };
 
   const BidHistoryList = () =>
-    data.bids.length === 0 ? (
+    sealedHidden ? (
+      <div className="py-10 text-center">
+        <p className="text-gray-500 text-sm font-medium">
+          {data.sealedBidCount} sealed bid{data.sealedBidCount !== 1 && "s"} so
+          far
+        </p>
+        <p className="text-gray-400 text-xs mt-1">
+          Amounts and names are revealed when the auction closes.
+        </p>
+      </div>
+    ) : data.bids.length === 0 ? (
       <div className="py-10 text-center">
         <p className="text-gray-400 text-sm">No bids yet</p>
         <p className="text-gray-300 text-xs mt-1">
-          Be the first to place a bid!
+          {isDutch
+            ? "The first person to accept the price wins."
+            : "Be the first to place a bid!"}
         </p>
       </div>
     ) : (
@@ -104,8 +119,8 @@ export const ViewAuction = () => {
           <div
             key={index}
             className={`flex items-center justify-between p-3 rounded-xl transition ${
-              index === 0
-                ? "bg-indigo-50 border border-indigo-100"
+              index === leaderRow
+                ? "bg-brand-50 border border-brand-100"
                 : "hover:bg-gray-50"
             }`}
           >
@@ -118,9 +133,14 @@ export const ViewAuction = () => {
               <div>
                 <p className="text-sm font-medium text-gray-800">
                   {bid.bidder?.name}
-                  {index === 0 && (
-                    <span className="ml-2 text-[10px] font-semibold uppercase text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">
-                      Leading
+                  {index === leaderRow && (
+                    <span className="ml-2 text-[10px] font-semibold uppercase text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded">
+                      {winnerData ? "Winner" : "Leading"}
+                    </span>
+                  )}
+                  {bid.isAuto && (
+                    <span className="ml-2 text-[10px] font-semibold uppercase text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                      Auto
                     </span>
                   )}
                 </p>
@@ -130,7 +150,7 @@ export const ViewAuction = () => {
               </div>
             </div>
             <span className="text-sm font-semibold text-gray-700 tabular-nums">
-              Rs {bid.bidAmount}
+              {formatRs(bid.bidAmount)}
             </span>
           </div>
         ))}
@@ -149,7 +169,7 @@ export const ViewAuction = () => {
               navigate(-1);
             }
           }}
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition mb-6 group"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-600 transition mb-6 group"
         >
           <svg
             className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
@@ -203,6 +223,15 @@ export const ViewAuction = () => {
                 </div>
               </div>
 
+              {!isDutch && !sealedHidden && data.bids.length > 1 && (
+                <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Price over time
+                  </h3>
+                  <PriceChart bids={data.bids} />
+                </div>
+              )}
+
               {/* Bid History — Desktop */}
               <div className="hidden lg:block bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5">
                 <h3 className="text-sm font-semibold text-gray-700 mb-4">
@@ -218,15 +247,39 @@ export const ViewAuction = () => {
             {/* Title & Category */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                <span
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-full ${format.badge}`}
+                >
+                  {format.label} auction
+                </span>
+                <span className="text-xs font-medium text-brand-600 bg-brand-50 px-2.5 py-1 rounded-full">
                   {data.itemCategory}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => toggleWatch()}
+                  aria-pressed={!!data.isWatching}
+                  className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-rose-600 transition"
+                >
+                  {data.isWatching ? (
+                    <IoHeart className="w-4 h-4 text-rose-500" />
+                  ) : (
+                    <IoHeartOutline className="w-4 h-4" />
+                  )}
+                  {data.isWatching ? "Watching" : "Watch"}
+                </button>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
                 {data.itemName}
               </h1>
               <p className="mt-3 text-gray-500 text-[15px] leading-relaxed">
                 {data.itemDescription}
+              </p>
+              <p className="mt-3 text-xs text-gray-500 leading-relaxed bg-stone-100 rounded-xl px-3.5 py-2.5">
+                <span className="font-semibold text-gray-700">
+                  How this sale works:{" "}
+                </span>
+                {format.rules}
               </p>
             </div>
 
@@ -236,16 +289,51 @@ export const ViewAuction = () => {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Current Bid
+                      {data.settledAt && data.outcome === "sold"
+                        ? "Final Price"
+                        : isDutch
+                          ? "Price Now"
+                          : sealedHidden
+                            ? "Opening Price"
+                            : "Current Bid"}
                     </p>
                     <p className="text-3xl sm:text-4xl font-bold text-gray-900 mt-1 tabular-nums">
-                      Rs {data.currentPrice}
+                      {formatRs(shownPrice)}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Started at Rs {data.startingPrice}
-                    </p>
+                    {!sealedHidden && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Started at {formatRs(data.startingPrice)}
+                      </p>
+                    )}
+                    {data.hasReserve && !sealedHidden && (
+                      <p
+                        className={`text-xs font-medium mt-1.5 ${
+                          data.reserveMet ? "text-emerald-600" : "text-amber-700"
+                        }`}
+                      >
+                        {data.reserveMet
+                          ? "Reserve met"
+                          : "Reserve not met yet"}
+                      </p>
+                    )}
+                    {data.hasReserve && sealedHidden && (
+                      <p className="text-xs font-medium text-amber-700 mt-1.5">
+                        Has a hidden reserve
+                      </p>
+                    )}
+                    {isSeller && data.reservePrice != null && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Your reserve: {formatRs(data.reservePrice)}
+                      </p>
+                    )}
+                    {data.extensions > 0 && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Extended {data.extensions} time
+                        {data.extensions !== 1 && "s"} by late bids
+                      </p>
+                    )}
                   </div>
-                  <div className="text-right">
+                  <div className={`text-right ${isDutch ? "hidden" : ""}`}>
                     <div className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
                       <svg
                         className="w-3 h-3"
@@ -260,7 +348,9 @@ export const ViewAuction = () => {
                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                       </svg>
-                      {data.bids.length} bid{data.bids.length !== 1 && "s"}
+                      {sealedHidden ? data.sealedBidCount : data.bids.length} bid
+                      {(sealedHidden ? data.sealedBidCount : data.bids.length) !==
+                        1 && "s"}
                     </div>
                   </div>
                 </div>
@@ -350,8 +440,10 @@ export const ViewAuction = () => {
                   </div>
                 </div>
                 <p className="text-sm text-amber-700">
-                  Won with a bid of{" "}
-                  <span className="font-bold">Rs {data.currentPrice}</span>
+                  {isSealed ? "Pays the second-highest price of " : "Won for "}
+                  <span className="font-bold">
+                    {formatRs(data.currentPrice)}
+                  </span>
                 </p>
                 {winnerData._id === currentUserId && (
                   <div className="mt-3 bg-amber-100 text-amber-800 text-sm font-medium px-4 py-2 rounded-xl">
@@ -361,7 +453,7 @@ export const ViewAuction = () => {
               </div>
             )}
 
-            {!isActive && !winnerData && data.bids.length === 0 && (
+            {data.outcome === "no_bids" && (
               <div className="bg-gray-100 rounded-2xl border border-gray-200 p-6 text-center">
                 <p className="text-sm text-gray-500">
                   This auction ended with no bids.
@@ -369,53 +461,18 @@ export const ViewAuction = () => {
               </div>
             )}
 
-            {/* Bid Form */}
+            {data.outcome === "reserve_not_met" && (
+              <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6 text-center">
+                <p className="text-sm text-amber-800">
+                  Bidding closed below the seller&apos;s reserve, so this item
+                  did not sell.
+                </p>
+              </div>
+            )}
+
+            {/* Bid Panel */}
             {!isSeller && isActive && (
-              <form
-                onSubmit={handleBidSubmit}
-                className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-6"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <label
-                    htmlFor="bidAmount"
-                    className="text-sm font-semibold text-gray-700"
-                  >
-                    Place your bid
-                  </label>
-                  <span className="text-xs text-gray-400">
-                    Rs {data.currentPrice + 1} – {data.currentPrice + 10}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                      Rs
-                    </span>
-                    <input
-                      type="number"
-                      name="bidAmount"
-                      id="bidAmount"
-                      ref={inputRef}
-                      min={data.currentPrice + 1}
-                      max={data.currentPrice + 10}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-semibold text-lg tabular-nums placeholder:text-gray-300 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition"
-                      placeholder={String(data.currentPrice + 1)}
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={bidding}
-                    className={`px-5 py-3 rounded-xl font-semibold text-sm transition-all ${
-                      bidding
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.97] shadow-sm shadow-indigo-200"
-                    }`}
-                  >
-                    {bidding ? "Bidding..." : "Bid Now"}
-                  </button>
-                </div>
-              </form>
+              <BidPanel auction={data} currentUserId={currentUserId} />
             )}
 
             {/* Socket Error */}
