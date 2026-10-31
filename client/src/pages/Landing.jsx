@@ -4,7 +4,6 @@ import { Features } from "../components/Landing/Features";
 import { Hero } from "../components/Landing/Hero";
 import Dashboard from "./Dashboard";
 import LoadingScreen from "../components/LoadingScreen";
-import { Auction } from "../components/Landing/Auction";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export const Landing = () => {
@@ -18,7 +17,6 @@ export const Landing = () => {
       {!user && (
         <>
           <Hero />
-          <Auction />
           <Features />
           <CTA />
         </>

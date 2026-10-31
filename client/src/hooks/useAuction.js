@@ -1,5 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  keepPreviousData,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  buyAuction,
+  getWatchlist,
+  toggleWatch,
   getAuctions,
   getMyAuctions,
   getMyBids,
@@ -9,11 +17,42 @@ import {
   dashboardStats,
 } from "../services/auction.service.js";
 
-export const useGetAuctions = (page = 1) => {
+export const useGetAuctions = (page = 1, filters = {}) => {
   return useQuery({
-    queryKey: ["auctions", page],
-    queryFn: () => getAuctions({ page }),
-    keepPreviousData: true,
+    queryKey: ["auctions", page, filters],
+    queryFn: () => getAuctions({ page, ...filters }),
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetWatchlist = (page = 1) => {
+  return useQuery({
+    queryKey: ["watchlist", page],
+    queryFn: () => getWatchlist({ page }),
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useToggleWatch = (id) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => toggleWatch(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auction", id] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
+  });
+};
+
+export const useBuyAuction = (id) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => buyAuction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
   });
 };
 
@@ -38,6 +77,16 @@ export const useViewAuction = (id) => {
     queryKey: ["auction", id],
     queryFn: () => viewAuction(id),
     enabled: !!id,
+    retry: false,
+    // Catches the result even if the socket event was missed
+    refetchInterval: (query) => {
+      const auction = query.state.data;
+      const closing =
+        auction &&
+        !auction.settledAt &&
+        new Date(auction.itemEndDate) <= new Date();
+      return closing ? 3000 : false;
+    },
   });
 };
 
@@ -45,7 +94,8 @@ export const usePlaceBid = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bidAmount, id }) => placeBid({ bidAmount, id }),
+    mutationFn: ({ bidAmount, maxBid, id }) =>
+      placeBid({ bidAmount, maxBid, id }),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries(["auction", variables.id]);
       queryClient.invalidateQueries(["auctions"]);

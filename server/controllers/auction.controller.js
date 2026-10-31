@@ -1,14 +1,62 @@
-import getImageUrl from "../services/cloudinaryService.js";
 import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
 import mongoose from "mongoose";
-import { getIO } from "../socket/index.js";
 import Upload from "../models/upload.model.js";
+import { dutchPriceAt, validateListing } from "../services/auctionRules.js";
+import {
+  BidError,
+  buyAuction as buyAuctionService,
+  placeBid as placeBidService,
+  settleAuction,
+  toPublicAuction,
+} from "../services/bidding.service.js";
+
+const optionalNumber = (value) =>
+  value === "" || value == null ? null : Number(value);
+
+// Card fields shared by every auction listing
+const CARD_FIELDS =
+  "itemName itemDescription currentPrice startingPrice bids itemStartDate itemEndDate itemCategory itemImage seller format buyNowPrice dutchFloor dutchDropAmount dutchDropMinutes sealedBidCount settledAt outcome";
+
+const toCard = (item, now = new Date()) => ({
+  _id: item._id,
+  itemName: item.itemName,
+  itemDescription: item.itemDescription,
+  currentPrice:
+    item.format === "dutch" && !item.settledAt
+      ? dutchPriceAt(item, now)
+      : item.currentPrice,
+  bidsCount: item.format === "sealed" ? item.sealedBidCount : item.bids.length,
+  timeLeft: Math.max(0, new Date(item.itemEndDate) - now),
+  startsIn: Math.max(0, new Date(item.itemStartDate) - now),
+  itemCategory: item.itemCategory,
+  sellerName: item.seller?.name,
+  itemPhoto: item.itemImage?.url,
+  format: item.format,
+  buyNowPrice: item.buyNowPrice,
+  outcome: item.outcome,
+});
+
+const parsePaging = (query) => {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(query.limit) || 12));
+  return { page, limit, skip: (page - 1) * limit };
+};
+
+const paginated = (auctions, total, { page, limit }) => ({
+  auctions,
+  pagination: {
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  },
+});
 
 export const createAuction = async (req, res) => {
   try {
     const {
       itemName,
-      startingPrice,
       itemDescription,
       itemCategory,
       itemStartDate,
@@ -18,6 +66,24 @@ export const createAuction = async (req, res) => {
       secure_url,
     } = req.body;
 
+    const format = req.body.format || "english";
+    const listing = {
+      format,
+      startingPrice: Number(req.body.startingPrice),
+      reservePrice:
+        format === "dutch" ? null : optionalNumber(req.body.reservePrice),
+      buyNowPrice:
+        format === "english" ? optionalNumber(req.body.buyNowPrice) : null,
+      dutchFloor: optionalNumber(req.body.dutchFloor),
+      dutchDropAmount: optionalNumber(req.body.dutchDropAmount),
+      dutchDropMinutes: optionalNumber(req.body.dutchDropMinutes),
+    };
+
+    const listingError = validateListing(listing);
+    if (listingError) {
+      return res.status(400).json({ message: listingError });
+    }
+
     const start = itemStartDate ? new Date(itemStartDate) : new Date();
     const end = new Date(itemEndDate);
     if (end <= start) {
@@ -26,7 +92,7 @@ export const createAuction = async (req, res) => {
         .json({ message: "Auction end date must be after start date" });
     }
 
-    const upload = await Upload.findOne({ formId });
+    const upload = await Upload.findOne({ formId, status: "pending" });
 
     if (!upload) {
       return res.status(400).json({
@@ -41,9 +107,9 @@ export const createAuction = async (req, res) => {
     }
 
     const newAuction = new Product({
+      ...listing,
       itemName,
-      startingPrice,
-      currentPrice: startingPrice,
+      currentPrice: listing.startingPrice,
       itemDescription,
       itemCategory,
       itemImage: {
@@ -69,44 +135,37 @@ export const createAuction = async (req, res) => {
   }
 };
 
+const SORTS = {
+  ending: { itemEndDate: 1 },
+  newest: { createdAt: -1 },
+  price_low: { currentPrice: 1 },
+  price_high: { currentPrice: -1 },
+};
+
 export const showAuction = async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 12));
-    const skip = (page - 1) * limit;
+    const paging = parsePaging(req.query);
+    const { q, category, format, sort } = req.query;
 
-    const filter = { itemEndDate: { $gt: new Date() } };
+    const filter = { itemEndDate: { $gt: new Date() }, settledAt: null };
+    if (typeof category === "string" && category) {
+      filter.itemCategory = category;
+    }
+    if (typeof format === "string" && format) filter.format = format;
+    if (typeof q === "string" && q.trim()) {
+      filter.$text = { $search: q.trim() };
+    }
+
     const total = await Product.countDocuments(filter);
 
     const auction = await Product.find(filter)
       .populate("seller", "name")
-      .select(
-        "itemName itemDescription currentPrice bids itemEndDate itemCategory itemImage seller",
-      )
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-    const formatted = auction.map((item) => ({
-      _id: item._id,
-      itemName: item.itemName,
-      itemDescription: item.itemDescription,
-      currentPrice: item.currentPrice,
-      bidsCount: item.bids.length,
-      timeLeft: Math.max(0, new Date(item.itemEndDate) - new Date()),
-      itemCategory: item.itemCategory,
-      sellerName: item.seller.name,
-      itemPhoto: item.itemImage?.url,
-    }));
+      .select(CARD_FIELDS)
+      .sort(SORTS[sort] || SORTS.newest)
+      .skip(paging.skip)
+      .limit(paging.limit);
 
-    res.status(200).json({
-      auctions: formatted,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    res.status(200).json(paginated(auction.map((a) => toCard(a)), total, paging));
   } catch (error) {
     return res
       .status(500)
@@ -117,38 +176,34 @@ export const showAuction = async (req, res) => {
 export const auctionById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
+
+    // The worker normally closes auctions; this covers serverless hosts without one
+    const check = await Product.findById(id).select("itemEndDate settledAt");
+    if (!check) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+    if (!check.settledAt && new Date(check.itemEndDate) <= new Date()) {
+      await settleAuction(id);
+    }
+
     const auction = await Product.findById(id)
+      .select("+proxyBids +sealedBids")
       .populate("seller", "name")
       .populate("bids.bidder", "name")
       .populate("winner", "name");
 
-    if (!auction) {
-      return res.status(404).json({ message: "Auction not found" });
-    }
+    const viewer = await User.findById(userId).select("watchlist");
+    const isWatching = !!viewer?.watchlist?.some((w) => w.toString() === id);
 
-    // Auto-set winner when auction has ended and has bids but no winner yet
-    const isExpired = new Date(auction.itemEndDate) < new Date();
-    if (isExpired && !auction.winner && auction.bids.length > 0) {
-      // Highest bid = first after sorting descending
-      const sortedBids = [...auction.bids].sort(
-        (a, b) => b.bidAmount - a.bidAmount,
-      );
-      const highestBid = sortedBids[0];
-      auction.winner = highestBid.bidder;
-      auction.isSold = true;
-      await auction.save();
-      // Re-populate winner after save
-      await auction.populate("winner", "name");
-    }
-
-    // If auction is expired, only allow seller and bidders to view it
+    // If auction is expired, only allow seller, bidders and watchers to view it
+    const isExpired = new Date(auction.itemEndDate) <= new Date();
     if (isExpired) {
-      const userId = req.user.id;
       const isSeller = auction.seller._id.toString() === userId;
       const isBidder = auction.bids.some(
         (b) => b.bidder?._id?.toString() === userId,
       );
-      if (!isSeller && !isBidder) {
+      if (!isSeller && !isBidder && !isWatching) {
         return res.status(403).json({
           message: "This auction has ended and is no longer available",
         });
@@ -156,7 +211,11 @@ export const auctionById = async (req, res) => {
     }
 
     auction.bids.sort((a, b) => new Date(b.bidTime) - new Date(a.bidTime));
-    res.status(200).json(auction);
+
+    res.status(200).json({
+      ...toPublicAuction(auction, userId),
+      isWatching,
+    });
   } catch (error) {
     return res
       .status(500)
@@ -164,90 +223,87 @@ export const auctionById = async (req, res) => {
   }
 };
 
+const sendBidError = (res, error, fallback) => {
+  if (error instanceof BidError) {
+    return res.status(error.status).json({ message: error.message });
+  }
+  return res.status(500).json({ message: fallback, error: error.message });
+};
+
 export const placeBid = async (req, res) => {
   try {
-    const bidAmount = Number(req.body.bidAmount);
-    const user = req.user.id;
+    const viewer = await User.findById(req.user.id).select("name");
+    const result = await placeBidService({
+      auctionId: req.params.id,
+      userId: req.user.id,
+      userName: viewer?.name,
+      amount: Number(req.body.bidAmount),
+      maxBid: optionalNumber(req.body.maxBid),
+    });
+    res.status(200).json(result);
+  } catch (error) {
+    sendBidError(res, error, "Error placing bid");
+  }
+};
+
+export const buyAuction = async (req, res) => {
+  try {
+    const result = await buyAuctionService({
+      auctionId: req.params.id,
+      userId: req.user.id,
+    });
+    res.status(200).json({
+      ...result,
+      message: `You won this auction for Rs ${result.price.toLocaleString("en-IN")}`,
+    });
+  } catch (error) {
+    sendBidError(res, error, "Error completing purchase");
+  }
+};
+
+export const toggleWatch = async (req, res) => {
+  try {
     const { id } = req.params;
-
-    if (isNaN(bidAmount)) {
-      return res.status(400).json({ message: "Invalid bid amount" });
+    if (!(await Product.exists({ _id: id }))) {
+      return res.status(404).json({ message: "Auction not found" });
     }
-
-    const product = await Product.findById(id);
-    if (!product) return res.status(404).json({ message: "Auction not found" });
-
-    // Prevent seller from bidding on their own auction
-    if (product.seller.toString() === user) {
-      return res
-        .status(403)
-        .json({ message: "You cannot bid on your own auction" });
-    }
-
-    if (new Date(product.itemEndDate) < new Date())
-      return res.status(400).json({ message: "Auction has already ended" });
-
-    const minBid = Math.max(product.currentPrice, product.startingPrice) + 1;
-    const maxBid = Math.max(product.currentPrice, product.startingPrice) + 10;
-    if (bidAmount < minBid)
-      return res
-        .status(400)
-        .json({ message: `Bid must be at least Rs ${minBid}` });
-    if (bidAmount > maxBid)
-      return res
-        .status(400)
-        .json({ message: `Bid must be at max Rs ${maxBid}` });
-
-    const updated = await Product.findOneAndUpdate(
-      {
-        _id: id,
-        currentPrice: product.currentPrice,
-        itemEndDate: { $gt: new Date() },
-      },
-      {
-        $set: { currentPrice: bidAmount },
-        $push: { bids: { bidder: user, bidAmount } },
-      },
-      { new: true },
+    const removed = await User.findOneAndUpdate(
+      { _id: req.user.id, watchlist: id },
+      { $pull: { watchlist: id } },
     );
-
-    if (!updated) {
-      return res
-        .status(409)
-        .json({ message: "Bid failed — price changed. Please try again." });
+    if (!removed) {
+      await User.updateOne(
+        { _id: req.user.id },
+        { $addToSet: { watchlist: id } },
+      );
     }
-
-    // Populate for the response and socket broadcast
-    const populated = await Product.findById(id)
-      .populate("seller", "name")
-      .populate("bids.bidder", "name");
-
-    populated.bids.sort((a, b) => new Date(b.bidTime) - new Date(a.bidTime));
-
-    // Broadcast to all socket users in this auction room
-    try {
-      const io = getIO();
-      const bidderName =
-        populated.bids.find((b) => b.bidder?._id?.toString() === user)?.bidder
-          ?.name || "Someone";
-
-      io.to(id).emit("auction:bidPlaced", {
-        auction: populated,
-        bidderName,
-        bidderId: user,
-        bidAmount,
-      });
-    } catch (socketErr) {
-      console.error("Socket broadcast error:", socketErr.message);
-    }
-
-    res
-      .status(200)
-      .json({ message: "Bid placed successfully", auction: populated });
+    res.status(200).json({ isWatching: !removed });
   } catch (error) {
     res
       .status(500)
-      .json({ message: "Error placing bid", error: error.message });
+      .json({ message: "Error updating watchlist", error: error.message });
+  }
+};
+
+export const watchlist = async (req, res) => {
+  try {
+    const paging = parsePaging(req.query);
+    const viewer = await User.findById(req.user.id).select("watchlist");
+    const filter = { _id: { $in: viewer?.watchlist ?? [] } };
+    const total = await Product.countDocuments(filter);
+
+    const auction = await Product.find(filter)
+      .populate("seller", "name")
+      .select(CARD_FIELDS)
+      .sort({ itemEndDate: 1 })
+      .skip(paging.skip)
+      .limit(paging.limit);
+
+    res.status(200).json(paginated(auction.map((a) => toCard(a)), total, paging));
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching watchlist", error: error.message });
   }
 };
 
@@ -284,40 +340,18 @@ export const dashboardData = async (req, res) => {
       .populate("seller", "name")
       .sort({ createdAt: -1 })
       .limit(4);
-    const latestAuctions = globalAuction.map((item) => ({
-      _id: item._id,
-      itemName: item.itemName,
-      itemDescription: item.itemDescription,
-      currentPrice: item.currentPrice,
-      bidsCount: item.bids.length,
-      timeLeft: Math.max(0, new Date(item.itemEndDate) - new Date()),
-      itemCategory: item.itemCategory,
-      sellerName: item.seller.name,
-      itemPhoto: item.itemImage?.url,
-    }));
 
     const userAuction = await Product.find({ seller: userObjectId })
       .populate("seller", "name")
       .sort({ createdAt: -1 })
       .limit(4);
-    const latestUserAuctions = userAuction.map((item) => ({
-      _id: item._id,
-      itemName: item.itemName,
-      itemDescription: item.itemDescription,
-      currentPrice: item.currentPrice,
-      bidsCount: item.bids.length,
-      timeLeft: Math.max(0, new Date(item.itemEndDate) - new Date()),
-      itemCategory: item.itemCategory,
-      sellerName: item.seller.name,
-      itemPhoto: item.itemImage?.url,
-    }));
 
     return res.status(200).json({
       totalAuctions,
       userAuctionCount,
       activeAuctions,
-      latestAuctions,
-      latestUserAuctions,
+      latestAuctions: globalAuction.map((a) => toCard(a)),
+      latestUserAuctions: userAuction.map((a) => toCard(a)),
     });
   } catch (error) {
     res
@@ -328,42 +362,19 @@ export const dashboardData = async (req, res) => {
 
 export const myAuction = async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 12));
-    const skip = (page - 1) * limit;
+    const paging = parsePaging(req.query);
 
     const filter = { seller: req.user.id };
     const total = await Product.countDocuments(filter);
 
     const auction = await Product.find(filter)
       .populate("seller", "name")
-      .select(
-        "itemName itemDescription currentPrice bids itemEndDate itemCategory itemImage seller",
-      )
+      .select(CARD_FIELDS)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-    const formatted = auction.map((item) => ({
-      _id: item._id,
-      itemName: item.itemName,
-      itemDescription: item.itemDescription,
-      currentPrice: item.currentPrice,
-      bidsCount: item.bids.length,
-      timeLeft: Math.max(0, new Date(item.itemEndDate) - new Date()),
-      itemCategory: item.itemCategory,
-      sellerName: item.seller.name,
-      itemPhoto: item.itemImage?.url,
-    }));
+      .skip(paging.skip)
+      .limit(paging.limit);
 
-    res.status(200).json({
-      auctions: formatted,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    res.status(200).json(paginated(auction.map((a) => toCard(a)), total, paging));
   } catch (error) {
     return res
       .status(500)
@@ -373,53 +384,32 @@ export const myAuction = async (req, res) => {
 
 export const myBids = async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 12));
-    const skip = (page - 1) * limit;
+    const paging = parsePaging(req.query);
     const userId = new mongoose.Types.ObjectId(req.user.id);
 
-    const filter = { "bids.bidder": userId };
+    const filter = {
+      $or: [{ "bids.bidder": userId }, { "sealedBids.bidder": userId }],
+    };
     const total = await Product.countDocuments(filter);
 
     const auction = await Product.find(filter)
       .populate("seller", "name")
       .populate("winner", "name")
-      .select(
-        "itemName itemDescription currentPrice bids itemEndDate itemCategory itemImage seller winner isSold",
-      )
+      .select(`${CARD_FIELDS} winner isSold`)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .skip(paging.skip)
+      .limit(paging.limit);
 
-    const formatted = auction.map((item) => {
-      const isExpired = new Date(item.itemEndDate) < new Date();
-      return {
-        _id: item._id,
-        itemName: item.itemName,
-        itemDescription: item.itemDescription,
-        currentPrice: item.currentPrice,
-        bidsCount: item.bids.length,
-        timeLeft: Math.max(0, new Date(item.itemEndDate) - new Date()),
-        itemCategory: item.itemCategory,
-        sellerName: item.seller.name,
-        itemPhoto: item.itemImage?.url,
-        isExpired,
-        winner: item.winner
-          ? { _id: item.winner._id, name: item.winner.name }
-          : null,
-        isSold: item.isSold,
-      };
-    });
+    const formatted = auction.map((item) => ({
+      ...toCard(item),
+      isExpired: new Date(item.itemEndDate) < new Date(),
+      winner: item.winner
+        ? { _id: item.winner._id, name: item.winner.name }
+        : null,
+      isSold: item.isSold,
+    }));
 
-    res.status(200).json({
-      auctions: formatted,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    res.status(200).json(paginated(formatted, total, paging));
   } catch (error) {
     return res
       .status(500)

@@ -1,4 +1,2 @@
 User-agent: *
 Allow: /
-
-Sitemap: https://auction.ihavetech.com/sitemap.xml

@@ -1,7 +1,10 @@
 import { Resend } from "resend";
 import { env } from "../config/env.config.js";
 
-const resend = new Resend(env.resend_api_key);
+// Email is optional: the contact form reports itself as unavailable without these
+const resend = env.resend_api_key ? new Resend(env.resend_api_key) : null;
+const CONTACT_INBOX = process.env.CONTACT_EMAIL;
+const MAIL_FROM = process.env.MAIL_FROM;
 
 // Escape HTML to prevent XSS in email templates
 const escapeHtml = (str) => {
@@ -16,6 +19,12 @@ const escapeHtml = (str) => {
 
 export const handleSendMessage = async (req, res) => {
   try {
+    if (!resend || !CONTACT_INBOX || !MAIL_FROM) {
+      return res
+        .status(503)
+        .json({ error: "The contact form is not set up on this server" });
+    }
+
     const { name, email, subject, message } = req.body;
 
     // Validate required fields
@@ -37,16 +46,16 @@ export const handleSendMessage = async (req, res) => {
 
     await resend.batch.send([
       {
-        from: `Online Auction <noreply@ihavetech.com>`,
-        to: ["hi@ihavetech.com"],
+        from: MAIL_FROM,
+        to: [CONTACT_INBOX],
         reply_to: email,
         subject: `${safeName} sent a message`,
         html: adminEmailTemplate(safeName, safeEmail, safeSubject, safeMessage),
       },
       {
-        from: `Avnish Kumar <hi@ihavetech.com>`,
+        from: MAIL_FROM,
         to: email,
-        subject: `Reply from Avnish Kumar`,
+        subject: `We received your message`,
         html: userEmailTemplate(safeName, safeEmail, safeSubject, safeMessage),
       },
     ]);
@@ -109,14 +118,12 @@ const userEmailTemplate = (name, email, subject, message) => `
         <p><strong>Message:</strong></p>
         <p>${message}</p>
 
-        <a href="https://auction.ihavetech.com" class="btn">Visit Our Website</a>
-
         <p>
           If this wasn’t you or you need immediate help, feel free to reply directly to this email.
         </p>
 
         <div class="footer">
-          &copy; 2025 Online Auction (Avnish Kumar). All rights reserved. <br />
+          Boli <br />
           This is an automated confirmation. Please do not reply.
         </div>
       </div>
@@ -151,7 +158,7 @@ const adminEmailTemplate = (name, email, subject, message) => `
     <body>
       <div class="container">
       <p>
-          New Contact Form Submission from Online Auction
+          New Contact Form Submission from Boli
         </p>
 
         <p><strong>Email:</strong> ${email}</p>

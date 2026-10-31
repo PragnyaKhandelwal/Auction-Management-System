@@ -10,6 +10,11 @@ export const generateUploadSignature = async () => {
 
   await Upload.create({ formId });
 
+  // Without Cloudinary keys (local demo) the client uses a placeholder image
+  if (!env.cloudinary_api_secret) {
+    return { demo: true, formId };
+  }
+
   const params = {
     timestamp,
     folder: "auction_system",

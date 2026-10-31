@@ -10,6 +10,7 @@ import {
   contactRoutes,
   adminRoutes,
   cloudinaryRoutes,
+  notificationRoutes,
 } from "./routes/index.js";
 import { connectDB } from "./config/db.config.js";
 import cron from "node-cron";
@@ -59,5 +60,6 @@ app.use("/auction", auctionRoutes);
 app.use("/contact", contactRoutes);
 app.use("/admin", adminRoutes);
 app.use("/upload", cloudinaryRoutes);
+app.use("/notifications", notificationRoutes);
 
 export default app; // Exporting default app for serverless deployment

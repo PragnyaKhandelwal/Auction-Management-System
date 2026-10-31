@@ -6,6 +6,28 @@ import {
   getUploadSignature,
   uploadImageToCloudinary,
 } from "../services/auction.service.js";
+import { CATEGORIES, FORMATS } from "../utils/auction.js";
+
+const EMPTY_FORM = {
+  itemName: "",
+  itemDescription: "",
+  itemCategory: "",
+  startingPrice: "",
+  itemStartDate: "",
+  itemEndDate: "",
+  format: "english",
+  reservePrice: "",
+  buyNowPrice: "",
+  dutchFloor: "",
+  dutchDropAmount: "",
+  dutchDropMinutes: "",
+};
+
+// Format a Date for a datetime-local input, in the user's own timezone
+const toLocalInput = (date) => {
+  const offsetMs = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+};
 
 export const CreateAuction = () => {
   useDocumentTitle("Create Auction");
@@ -25,14 +47,7 @@ export const CreateAuction = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedFileName, setSelectedFileName] = useState("");
 
-  const [formData, setFormData] = useState({
-    itemName: "",
-    itemDescription: "",
-    itemCategory: "",
-    startingPrice: "",
-    itemStartDate: "",
-    itemEndDate: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
     return () => {
@@ -44,14 +59,7 @@ export const CreateAuction = () => {
 
   const { mutate, isPending } = useCreateAuction({
     onSuccess: (data) => {
-      setFormData({
-        itemName: "",
-        itemDescription: "",
-        itemCategory: "",
-        startingPrice: "",
-        itemStartDate: "",
-        itemEndDate: "",
-      });
+      setFormData(EMPTY_FORM);
 
       if (previewUrlRef.current) {
         URL.revokeObjectURL(previewUrlRef.current);
@@ -70,22 +78,6 @@ export const CreateAuction = () => {
     onError: (err) =>
       setError(err?.response?.data?.message || "Something went wrong"),
   });
-
-  const categories = [
-    "Electronics",
-    "Antiques",
-    "Art",
-    "Books",
-    "Clothing",
-    "Collectibles",
-    "Home & Garden",
-    "Jewelry",
-    "Musical Instruments",
-    "Sports",
-    "Toys",
-    "Vehicles",
-    "Other",
-  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -156,6 +148,17 @@ export const CreateAuction = () => {
         throw new Error("Failed to initialize upload session");
       }
 
+      // Local demo without Cloudinary keys: list with a placeholder image
+      if (signatureData.demo) {
+        uploadedMetaRef.current = {
+          formId: signatureData.formId,
+          public_id: "demo",
+          secure_url: `https://picsum.photos/seed/${signatureData.formId}/800/600`,
+        };
+        setUploadProgress(100);
+        return;
+      }
+
       const uploadRes = await uploadImageToCloudinary({
         file,
         signatureData,
@@ -202,7 +205,9 @@ export const CreateAuction = () => {
       return;
     }
 
-    const start = new Date(formData.itemStartDate);
+    const start = formData.itemStartDate
+      ? new Date(formData.itemStartDate)
+      : new Date();
     const end = new Date(formData.itemEndDate);
 
     if (end <= start) {
@@ -218,21 +223,12 @@ export const CreateAuction = () => {
     });
   };
 
-  const today = new Date().toISOString().split("T")[0];
-
-  const maxStart = new Date();
-  maxStart.setDate(maxStart.getDate() + 15);
-  const maxStartDate = maxStart.toISOString().split("T")[0];
-
-  let maxEndDate = "";
-  if (formData.itemStartDate) {
-    const end = new Date(formData.itemStartDate);
-    end.setDate(end.getDate() + 15);
-    maxEndDate = end.toISOString().split("T")[0];
-  }
+  const earliest = toLocalInput(new Date());
+  const isDutch = formData.format === "dutch";
+  const isEnglish = formData.format === "english";
 
   const inputClasses =
-    "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition";
+    "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition";
 
   const submitDisabled = isPending || isUploading;
 
@@ -242,7 +238,7 @@ export const CreateAuction = () => {
         <button
           onClick={() => navigate(-1)}
           type="button"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition mb-6 group"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-600 transition mb-6 group"
         >
           <svg
             className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
@@ -268,6 +264,39 @@ export const CreateAuction = () => {
         <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm">
           <div className="p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-1.5">
+                  How do you want to sell it?
+                </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {Object.entries(FORMATS).map(([key, f]) => (
+                    <label
+                      key={key}
+                      className={`cursor-pointer rounded-xl border p-3.5 transition ${
+                        formData.format === key
+                          ? "border-brand-500 bg-brand-50 ring-1 ring-brand-500"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="format"
+                        value={key}
+                        checked={formData.format === key}
+                        onChange={handleInputChange}
+                        className="sr-only"
+                      />
+                      <span className="block text-sm font-semibold text-gray-900">
+                        {f.label}
+                      </span>
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        {f.tagline}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               <div>
                 <label
                   htmlFor="itemName"
@@ -323,7 +352,7 @@ export const CreateAuction = () => {
                     required
                   >
                     <option value="">Select category</option>
-                    {categories.map((category) => (
+                    {CATEGORIES.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>
@@ -336,7 +365,7 @@ export const CreateAuction = () => {
                     htmlFor="startingPrice"
                     className="block text-sm font-medium text-gray-700 mb-1.5"
                   >
-                    Starting Price (Rs)
+                    {isDutch ? "Opening Price (Rs)" : "Starting Price (Rs)"}
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
@@ -358,24 +387,130 @@ export const CreateAuction = () => {
                 </div>
               </div>
 
+              {isDutch ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div>
+                    <label
+                      htmlFor="dutchFloor"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Lowest Price (Rs)
+                    </label>
+                    <input
+                      type="number"
+                      id="dutchFloor"
+                      name="dutchFloor"
+                      value={formData.dutchFloor}
+                      onChange={handleInputChange}
+                      min="1"
+                      step="1"
+                      className={inputClasses}
+                      placeholder="500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="dutchDropAmount"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Drop By (Rs)
+                    </label>
+                    <input
+                      type="number"
+                      id="dutchDropAmount"
+                      name="dutchDropAmount"
+                      value={formData.dutchDropAmount}
+                      onChange={handleInputChange}
+                      min="1"
+                      step="1"
+                      className={inputClasses}
+                      placeholder="50"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="dutchDropMinutes"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Every (Minutes)
+                    </label>
+                    <input
+                      type="number"
+                      id="dutchDropMinutes"
+                      name="dutchDropMinutes"
+                      value={formData.dutchDropMinutes}
+                      onChange={handleInputChange}
+                      min="1"
+                      step="1"
+                      className={inputClasses}
+                      placeholder="10"
+                      required
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label
+                      htmlFor="reservePrice"
+                      className="block text-sm font-medium text-gray-700 mb-1.5"
+                    >
+                      Hidden Reserve (Rs, optional)
+                    </label>
+                    <input
+                      type="number"
+                      id="reservePrice"
+                      name="reservePrice"
+                      value={formData.reservePrice}
+                      onChange={handleInputChange}
+                      min="1"
+                      step="1"
+                      className={inputClasses}
+                      placeholder="It will not sell below this"
+                    />
+                  </div>
+                  {isEnglish && (
+                    <div>
+                      <label
+                        htmlFor="buyNowPrice"
+                        className="block text-sm font-medium text-gray-700 mb-1.5"
+                      >
+                        Buy Now Price (Rs, optional)
+                      </label>
+                      <input
+                        type="number"
+                        id="buyNowPrice"
+                        name="buyNowPrice"
+                        value={formData.buyNowPrice}
+                        onChange={handleInputChange}
+                        min="1"
+                        step="1"
+                        className={inputClasses}
+                        placeholder="Skip the bidding at this price"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label
                     htmlFor="itemStartDate"
                     className="block text-sm font-medium text-gray-700 mb-1.5"
                   >
-                    Start Date
+                    Starts (leave blank for now)
                   </label>
                   <input
-                    type="date"
+                    type="datetime-local"
                     id="itemStartDate"
                     name="itemStartDate"
-                    min={today}
+                    min={earliest}
                     value={formData.itemStartDate}
-                    max={maxStartDate}
                     onChange={handleInputChange}
                     className={inputClasses}
-                    required
                   />
                 </div>
 
@@ -384,16 +519,15 @@ export const CreateAuction = () => {
                     htmlFor="itemEndDate"
                     className="block text-sm font-medium text-gray-700 mb-1.5"
                   >
-                    End Date
+                    Ends
                   </label>
                   <input
-                    type="date"
+                    type="datetime-local"
                     id="itemEndDate"
                     name="itemEndDate"
                     value={formData.itemEndDate}
                     onChange={handleInputChange}
-                    min={formData.itemStartDate}
-                    max={maxEndDate}
+                    min={formData.itemStartDate || earliest}
                     className={inputClasses}
                     required
                   />
@@ -478,7 +612,7 @@ export const CreateAuction = () => {
                           className={`h-full transition-all duration-200 ${
                             uploadProgress === 100
                               ? "bg-emerald-500"
-                              : "bg-indigo-500"
+                              : "bg-brand-500"
                           }`}
                           style={{ width: `${uploadProgress}%` }}
                         />
@@ -508,7 +642,7 @@ export const CreateAuction = () => {
                   className={`w-full sm:w-auto px-8 py-3 rounded-xl font-semibold text-sm transition-all ${
                     submitDisabled
                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-indigo-600 text-white hover:bg-indigo-700 active:scale-[0.97] shadow-sm shadow-indigo-200"
+                      : "bg-brand-600 text-white hover:bg-brand-700 active:scale-[0.97] shadow-sm shadow-brand-200"
                   }`}
                 >
                   {isUploading

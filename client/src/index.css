@@ -1,8 +1,30 @@
 @import "tailwindcss";
 
+@theme {
+    --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+    --color-brand-50: #eef8f7;
+    --color-brand-100: #d5eeeb;
+    --color-brand-200: #aedcd8;
+    --color-brand-300: #7cc4be;
+    --color-brand-400: #4aa59f;
+    --color-brand-500: #2f8a85;
+    --color-brand-600: #1f6f6c;
+    --color-brand-700: #1b5957;
+    --color-brand-800: #184847;
+    --color-brand-900: #153b3b;
+    --color-brand-950: #0a2324;
+}
+
 @layer base {
     body {
         @apply bg-stone-50 text-gray-900 antialiased;
+    }
+
+    h1, h2 {
+        font-family: var(--font-display);
+        letter-spacing: -0.01em;
     }
 }
 

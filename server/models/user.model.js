@@ -47,6 +47,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    watchlist: [{ type: mongoose.Schema.ObjectId, ref: "Product" }],
   },
   { timestamps: true },
 );
