@@ -93,7 +93,7 @@ export const UsersList = () => {
     }
     return sortOrder === "asc" ? (
       <svg
-        className="w-3.5 h-3.5 text-indigo-600"
+        className="w-3.5 h-3.5 text-brand-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -107,7 +107,7 @@ export const UsersList = () => {
       </svg>
     ) : (
       <svg
-        className="w-3.5 h-3.5 text-indigo-600"
+        className="w-3.5 h-3.5 text-brand-600"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -179,7 +179,7 @@ export const UsersList = () => {
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition"
             />
           </div>
         </div>
@@ -249,7 +249,7 @@ export const UsersList = () => {
                 ) : (
                   users.map((user, i) => {
                     const avatarColors = [
-                      "from-indigo-400 to-violet-500",
+                      "from-brand-400 to-violet-500",
                       "from-emerald-400 to-teal-500",
                       "from-amber-400 to-orange-500",
                       "from-rose-400 to-pink-500",
@@ -368,7 +368,7 @@ export const UsersList = () => {
                         onClick={() => setCurrentPage(pageNum)}
                         className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
                           pageNum === currentPage
-                            ? "bg-indigo-600 text-white shadow-sm"
+                            ? "bg-brand-600 text-white shadow-sm"
                             : "text-gray-500 hover:bg-gray-100"
                         }`}
                       >

@@ -1,166 +1,64 @@
+# Boli
 
-# Auction Management System
+**बोली: "the bid".** A real-time auction house with three auction formats, built on the MERN stack.
 
-A full-stack, real-time auction platform that enables users to create auctions, place bids, track auction activity, and manage listings through an interactive web interface.
-
-Built with the MERN stack, the application combines real-time communication, secure authentication, and transactional database operations to support consistent auction workflows.
+| Format | How the price works | Who wins |
+|---|---|---|
+| **English** | Rises through open bids, with optional auto-bid | Highest bidder when the clock ends |
+| **Dutch** | Falls on a fixed schedule down to a floor | First person to accept |
+| **Sealed (Vickrey)** | Hidden until the close | Highest bidder, who pays the second-highest amount |
 
 ## Features
 
-- **Real-Time Bidding:** Uses Socket.io to broadcast bid updates and auction activity to connected clients.
-- **Concurrent Bid Handling:** Uses MongoDB transactions to maintain consistency when multiple users attempt to bid on the same auction.
-- **Authentication & Authorization:** Implements JWT-based authentication with HTTP-only cookies for session security.
-- **Auction Management:** Supports auction listing workflows and bid placement.
-- **Image Uploads:** Integrates Cloudinary for auction image storage and delivery.
-- **Email Notifications:** Uses Resend for application emails and relevant auction updates.
-- **Efficient Data Fetching:** Uses TanStack Query (React Query) for server-state management, caching, and query invalidation.
-- **Admin Dashboard:** Provides an administrative interface for managing auction-related data and operations.
+- **Proxy bidding:** set a private limit and the server bids one step at a time for you.
+- **Anti-sniping:** a bid in the last 2 minutes extends the auction (up to 15 times).
+- **Hidden reserve and Buy Now:** sellers set a floor that bidders never see, or an instant-win price.
+- **Automatic settlement:** a background worker closes auctions on time and picks the winner, without anyone having to open the page.
+- **Fair Play monitor:** an admin report of shill-bidding signals: repeat underbidders, price pushers, shared IPs and machine-speed bidding.
+- **Watchlist and live notifications:** outbid, won, sold and closing-soon alerts pushed over Socket.IO.
+- **Scaled bid steps:** Rs 10 on small lots up to Rs 1,000 on large ones.
+- **Server-side search:** full-text search, category and format filters, and sorting.
+- **Price chart:** the price history of each lot.
 
-## Tech Stack
+## Run it locally
 
-| Layer | Technologies |
-|---|---|
-| Frontend | React, JavaScript |
-| Backend | Node.js, Express.js |
-| Database | MongoDB |
-| Real-Time Communication | Socket.io |
-| Authentication | JWT, HTTP-only cookies |
-| Image Storage | Cloudinary |
-| Email Service | Resend |
-| Server-State Management | TanStack Query |
-| Deployment | Vercel, Render |
-
-## Architecture
-
-```text
-                 React Frontend
-                       |
-             REST API / Socket.io
-                       |
-                Express Server
-                 /           \
-        Authentication    Auction Services
-              |                  |
-          JWT Cookies      Bid Validation
-                                 |
-                        MongoDB Transactions
-                                 |
-                       Consistent Bid Updates
-
-External Services:
-  Cloudinary -> Image Storage
-  Resend     -> Email Delivery
-```
-
-## How It Works
-
-### 1. Authentication
-
-Users authenticate through the application, with JWT-based authentication and HTTP-only cookies used to protect authenticated routes. The backend verifies the user's identity and authorization before allowing protected operations.
-
-### 2. Auction Creation
-
-Users create auction listings with the relevant details and images. Images are uploaded to Cloudinary, while auction metadata is stored in MongoDB.
-
-### 3. Bid Placement
-
-When a user places a bid, the backend validates the request and checks the current auction state and bidding constraints before updating the auction.
-
-### 4. Concurrent Bid Handling
-
-Multiple users may attempt to bid on the same auction simultaneously. Database transactions help ensure that related database operations are committed consistently or rolled back on failure.
-
-The backend must validate the latest auction state within the transaction and handle transaction conflicts or retries appropriately. Socket.io then communicates accepted bid updates to connected clients.
-
-### 5. Real-Time Updates
-
-Socket.io enables the server to broadcast relevant auction events to connected users, reducing the need for clients to repeatedly poll the backend for updates.
-
-### 6. Data Fetching and Caching
-
-TanStack Query manages server-state fetching and caching on the frontend. Queries can be invalidated or refreshed after successful mutations to keep displayed auction information synchronized with backend state.
-
-## Environment Variables
-
-Create a `.env` file in the backend directory and configure the variables required by your implementation.
-
-```env
-PORT=5000
-MONGODB_URI=
-JWT_SECRET=
-CLIENT_URL=
-
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-
-RESEND_API_KEY=
-```
-
-Use the actual variable names expected by your application. Never commit credentials, API keys, or production secrets to version control.
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js and npm
-- MongoDB instance
-- Cloudinary account, if image uploads are enabled
-- Resend API key, if email functionality is enabled
-
-### Installation
-
-Clone the repository:
+You need Node.js 20 or newer. MongoDB and API keys are not needed for the demo.
 
 ```bash
-git clone https://github.com/unnati-joshi/Auction-Management-System.git
-cd Auction-Management-System
-```
-
-Install dependencies in the frontend and backend directories, using the directory names in your repository:
-
-```bash
-cd backend
+# Terminal 1: API with an in-memory database and sample data
+cd server
 npm install
+npm run demo
 
-cd ../frontend
+# Terminal 2: web client
+cd client
 npm install
-```
-
-Configure the environment variables and start the development servers using the scripts defined in each `package.json`.
-
-For example, if both projects define a `dev` script:
-
-```bash
 npm run dev
 ```
 
-Run this command separately in each directory.
+Open http://localhost:5173 and log in with password `demo1234` as `asha@demo.test`, `rohan@demo.test`, `meera@demo.test`, `kabir@demo.test`, `vikram@demo.test` or `admin@demo.test`. Open two browsers with different users to watch bids arrive live.
 
-## Engineering Highlights
+The first run downloads a MongoDB binary (around 100 MB). Demo data disappears when the server stops.
 
-- Designed REST APIs for auction and bidding workflows.
-- Integrated Socket.io for event-driven, real-time client updates.
-- Used MongoDB transactions to support consistent database updates during concurrent bidding.
-- Implemented JWT authentication using HTTP-only cookies.
-- Integrated external services for image storage and email delivery.
-- Managed frontend server state with TanStack Query.
+## Tests
 
-## Future Improvements
+```bash
+cd server
+npm test
+```
 
-- Add automated tests for simultaneous bidding and transaction conflicts.
-- Introduce rate limiting and stronger abuse prevention for bidding endpoints.
-- Add auction expiration jobs and reliable winner finalization.
-- Implement observability, structured logging, and performance monitoring.
-- Add pagination and indexing for large auction collections.
+The tests cover the pure auction rules and run the bidding service against a real in-memory MongoDB, including 20 simultaneous bids and two buyers racing to accept the same Dutch lot.
 
-## Author
+## Deploying
 
-**Unnati Joshi**
+The client needs `VITE_API` set to the API URL. The server needs `MONGO_URL`, `JWT_SECRET` and `ORIGIN`, plus these optional variables: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `RESEND_API_KEY`, `CONTACT_EMAIL` and `MAIL_FROM`. Without Cloudinary keys, new listings use a placeholder image. Without the three email settings, the contact form says it is unavailable.
 
-- GitHub: [unnati-joshi](https://github.com/unnati-joshi)
-- LinkedIn: [unnatijoshii](https://linkedin.com/in/unnatijoshii/)
+Host the API on a long-running Node server (`npm start`), such as Render or Railway. Socket.IO and the settlement worker do not run on serverless hosts like Vercel.
 
----
+## How it fits together
 
-*Built as a full-stack project to explore real-time applications, backend API design, authentication, and database consistency.*
+See [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Credits and license
+
+Boli started from the open-source [Auction Management System](https://github.com/unnati-joshi/Auction-Management-System), which carries an MIT license by Avnish Kumar. The login, profile, legal pages and base app structure come from that project. The original copyright notice is kept in [LICENSE](LICENSE), as the license requires.

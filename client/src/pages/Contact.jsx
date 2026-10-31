@@ -47,9 +47,9 @@ export const Contact = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-100 rounded-xl mb-4">
             <svg
-              className="w-6 h-6 text-indigo-600"
+              className="w-6 h-6 text-brand-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -73,9 +73,9 @@ export const Contact = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-6">
               <div className="flex items-start gap-4">
-                <div className="bg-indigo-50 p-2.5 rounded-xl shrink-0">
+                <div className="bg-brand-50 p-2.5 rounded-xl shrink-0">
                   <svg
-                    className="w-5 h-5 text-indigo-600"
+                    className="w-5 h-5 text-brand-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -186,7 +186,7 @@ export const Contact = () => {
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
-                    className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                    className="text-brand-600 hover:text-brand-700 font-medium text-sm"
                   >
                     Send another message &rarr;
                   </button>
@@ -208,7 +208,7 @@ export const Contact = () => {
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition"
+                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition"
                         placeholder="Your name"
                       />
                     </div>
@@ -226,7 +226,7 @@ export const Contact = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition"
+                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition"
                         placeholder="you@example.com"
                       />
                     </div>
@@ -246,7 +246,7 @@ export const Contact = () => {
                       value={formData.subject}
                       onChange={handleChange}
                       required
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition"
                       placeholder="How can we help?"
                     />
                   </div>
@@ -265,7 +265,7 @@ export const Contact = () => {
                       onChange={handleChange}
                       required
                       rows={5}
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 transition resize-none"
+                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 transition resize-none"
                       placeholder="Your message..."
                     ></textarea>
                   </div>
@@ -279,7 +279,7 @@ export const Contact = () => {
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="inline-flex items-center gap-2 bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-indigo-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shadow-indigo-200"
+                    className="inline-flex items-center gap-2 bg-brand-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-brand-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shadow-brand-200"
                   >
                     {isPending ? (
                       "Sending..."

@@ -50,11 +50,11 @@ const statConfig = [
   {
     key: "userAuctionCount",
     label: "Your Listings",
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
+    color: "text-brand-600",
+    bg: "bg-brand-50",
     icon: (
       <svg
-        className="w-5 h-5 text-indigo-500"
+        className="w-5 h-5 text-brand-500"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -89,7 +89,7 @@ const Dashboard = () => {
           </div>
           <Link
             to="/create"
-            className="hidden sm:inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 active:scale-[0.97] transition-all shadow-sm shadow-indigo-200"
+            className="hidden sm:inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 active:scale-[0.97] transition-all shadow-sm shadow-brand-200"
           >
             <svg
               className="w-4 h-4"
@@ -138,7 +138,7 @@ const Dashboard = () => {
             </h2>
             <Link
               to="/auction"
-              className="text-sm font-medium text-indigo-500 hover:text-indigo-600 transition"
+              className="text-sm font-medium text-brand-500 hover:text-brand-600 transition"
             >
               View all &rarr;
             </Link>
@@ -165,7 +165,7 @@ const Dashboard = () => {
             </h2>
             <Link
               to="/myauction"
-              className="text-sm font-medium text-indigo-500 hover:text-indigo-600 transition"
+              className="text-sm font-medium text-brand-500 hover:text-brand-600 transition"
             >
               View all &rarr;
             </Link>
@@ -178,7 +178,7 @@ const Dashboard = () => {
               </p>
               <Link
                 to="/create"
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200"
+                className="inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all shadow-sm shadow-brand-200"
               >
                 Create your first auction
               </Link>
@@ -195,7 +195,7 @@ const Dashboard = () => {
         {/* Mobile FAB */}
         <Link
           to="/create"
-          className="sm:hidden fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-95 transition-all z-50"
+          className="sm:hidden fixed bottom-6 right-6 bg-brand-600 text-white p-4 rounded-2xl shadow-lg shadow-brand-200 hover:bg-brand-700 active:scale-95 transition-all z-50"
         >
           <svg
             className="w-6 h-6"

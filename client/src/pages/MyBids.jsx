@@ -31,7 +31,7 @@ export const MyBids = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition mb-6 group"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-600 transition mb-6 group"
         >
           <svg
             className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
@@ -66,7 +66,7 @@ export const MyBids = () => {
                 onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   filter === f
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-brand-600 text-white shadow-sm"
                     : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:text-gray-900"
                 }`}
               >
@@ -109,7 +109,7 @@ export const MyBids = () => {
             {filter === "all" && (
               <Link
                 to="/auction"
-                className="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-200"
+                className="inline-flex items-center gap-2 bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-all shadow-sm shadow-brand-200"
               >
                 Browse auctions
               </Link>
@@ -129,7 +129,7 @@ export const MyBids = () => {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               Previous
             </button>
@@ -140,8 +140,8 @@ export const MyBids = () => {
                   onClick={() => setPage(p)}
                   className={`w-10 h-10 rounded-xl text-sm font-semibold transition ${
                     p === page
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600"
+                      ? "bg-brand-600 text-white shadow-sm"
+                      : "bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600"
                   }`}
                 >
                   {p}
@@ -153,7 +153,7 @@ export const MyBids = () => {
                 setPage((p) => Math.min(pagination.totalPages, p + 1))
               }
               disabled={page === pagination.totalPages}
-              className="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               Next
             </button>
