@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 
-const SITE_NAME = "Online Auction";
+const SITE_NAME = "Boli";
 
 /**
  * Sets the document title for the current page.
- * Appends the site name: "Page Title | Online Auction"
+ * Appends the site name: "Page Title | Boli"
  * Resets to default on unmount.
  */
 export const useDocumentTitle = (title) => {
