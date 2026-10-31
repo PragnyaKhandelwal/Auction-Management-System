@@ -5,6 +5,7 @@ import { AuctionList } from "../pages/AuctionList";
 import { CreateAuction } from "../pages/CreateAuction";
 import { MyAuction } from "../pages/MyAuction";
 import { MyBids } from "../pages/MyBids";
+import { Watchlist } from "../pages/Watchlist";
 import Profile from "../pages/Profile";
 import Privacy from "../pages/Privacy";
 
@@ -27,6 +28,11 @@ export const protectedRoutes = [
       {
         path: "mybids",
         element: <MyBids />,
+        errorElement: <Error />,
+      },
+      {
+        path: "watchlist",
+        element: <Watchlist />,
         errorElement: <Error />,
       },
       {

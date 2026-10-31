@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, NavLink, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/auth/authSlice";
+import { disconnectSocket } from "../config/socket.js";
+import { NotificationBell } from "./NotificationBell.jsx";
 import { usePrefetchHandlers } from "../hooks/useAuction.js";
 import {
   MdOutlineCreate,
@@ -12,6 +14,8 @@ import {
   MdOutlineHome,
   MdOutlinePrivacyTip,
   MdAdminPanelSettings,
+  MdOutlineFavoriteBorder,
+  MdOutlineShield,
 } from "react-icons/md";
 import {
   IoCloseSharp,
@@ -48,6 +52,7 @@ export const Navbar = () => {
   );
 
   const handleLogout = () => {
+    disconnectSocket();
     dispatch(logout());
     navigate("/");
   };
@@ -79,11 +84,11 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
               <Link to="/" className="flex items-center gap-2.5 group">
-                <div className="bg-indigo-600 text-white p-1.5 rounded-lg group-hover:bg-indigo-700 transition">
+                <div className="bg-brand-600 text-white p-1.5 rounded-lg group-hover:bg-brand-700 transition">
                   <RiAuctionLine className="h-5 w-5" />
                 </div>
                 <span className="text-lg font-bold text-gray-900 tracking-tight">
-                  Online Auction
+                  Boli
                 </span>
               </Link>
 
@@ -98,7 +103,7 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
                     className={({ isActive }) =>
                       `px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
                         isActive
-                          ? "text-indigo-600 bg-indigo-50"
+                          ? "text-brand-600 bg-brand-50"
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                       }`
                     }
@@ -123,12 +128,12 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
                       className={({ isActive }) =>
                         `flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                           isActive
-                            ? "text-indigo-600 bg-indigo-50"
+                            ? "text-brand-600 bg-brand-50"
                             : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                         }`
                       }
                     >
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
+                      <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-xs font-bold text-brand-600">
                         {user?.user?.name?.charAt(0)?.toUpperCase()}
                       </div>
                       {user?.user?.name?.split(" ")[0]}
@@ -142,6 +147,8 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
                     </button>
                   </div>
                 )}
+
+                {user && <NotificationBell />}
 
                 {/* Hamburger — always visible */}
                 <button
@@ -179,11 +186,11 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
             className="flex items-center gap-2.5"
             onClick={() => setIsMenuOpen(false)}
           >
-            <div className="bg-indigo-600 text-white p-1.5 rounded-lg">
+            <div className="bg-brand-600 text-white p-1.5 rounded-lg">
               <RiAuctionLine className="h-5 w-5" />
             </div>
             <span className="text-lg font-bold text-gray-900 tracking-tight">
-              Online Auction
+              Boli
             </span>
           </Link>
           <button
@@ -199,7 +206,7 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
         {user && (
           <div className="px-5 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden">
+              <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center overflow-hidden">
                 {user?.user?.avatar ? (
                   <img
   src={user?.user?.avatar}
@@ -207,7 +214,7 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="text-sm font-bold text-indigo-600">
+                  <span className="text-sm font-bold text-brand-600">
                    {user?.user?.name?.charAt(0)?.toUpperCase()}
                   </span>
                 )}
@@ -239,7 +246,7 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     isActive
-                      ? "text-indigo-600 bg-indigo-50"
+                      ? "text-brand-600 bg-brand-50"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`
                 }
@@ -275,7 +282,7 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
               </Link>
               <Link
                 to="/signup"
-                className="block w-full py-2.5 px-4 text-center bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition"
+                className="block w-full py-2.5 px-4 text-center bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Sign up
@@ -299,7 +306,7 @@ export const LoginSignup = () => {
       </Link>
       <Link
         to="/signup"
-        className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition"
+        className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 transition"
       >
         Sign up
       </Link>
@@ -371,6 +378,11 @@ const protectedNavLink = [
     link: "/privacy",
     icon: <MdOutlinePrivacyTip className="h-5 w-5" />,
   },
+  {
+    name: "Watchlist",
+    link: "/watchlist",
+    icon: <MdOutlineFavoriteBorder className="h-5 w-5" />,
+  },
 ];
 
 const adminNavLink = [
@@ -418,11 +430,17 @@ const getNavLinks = (userRole) => {
 const getAllLinks = (userRole) => {
   if (userRole === "admin") {
     return [
+      {
+        name: "Fair Play",
+        link: "/admin/fair-play",
+        icon: <MdOutlineShield className="h-5 w-5" />,
+      },
       ...adminNavLink,
+      protectedNavLink[8], // Watchlist
       protectedNavLink[5], // Contact
       protectedNavLink[6], // Profile
       protectedNavLink[7], // Privacy
     ];
   }
-  return protectedNavLink; // All 8 links
+  return protectedNavLink; // All links
 };
