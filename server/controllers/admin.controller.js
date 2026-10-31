@@ -1,5 +1,35 @@
 import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
+import { analyzeFairPlay } from "../services/fairPlay.js";
+
+const FAIR_PLAY_LOOKBACK_DAYS = 90;
+
+export const getFairPlayReport = async (req, res) => {
+  try {
+    const since = new Date(
+      Date.now() - FAIR_PLAY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const auctions = await Product.find({
+      updatedAt: { $gte: since },
+      "bids.0": { $exists: true },
+    })
+      .select("itemName seller bids winner settledAt")
+      .populate("seller", "name ipAddress")
+      .populate("bids.bidder", "name ipAddress")
+      .lean();
+
+    res.status(200).json({
+      scanned: auctions.length,
+      lookbackDays: FAIR_PLAY_LOOKBACK_DAYS,
+      flags: analyzeFairPlay(auctions),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error building fair-play report",
+      error: error.message,
+    });
+  }
+};
 
 export const getAdminDashboard = async (req, res) => {
   try {
