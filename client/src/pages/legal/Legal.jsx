@@ -43,7 +43,7 @@ export default function Legal() {
           </h1>
           <p className="text-lg text-gray-600 mb-8">
             Please review our legal documents to understand your rights and
-            responsibilities when using our online auction platform.
+            responsibilities when using our Boli platform.
           </p>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

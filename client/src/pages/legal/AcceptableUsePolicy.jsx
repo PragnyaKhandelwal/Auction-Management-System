@@ -20,7 +20,7 @@ export default function AcceptableUsePolicy() {
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               This Acceptable Use Policy outlines the permitted and prohibited
-              uses of our online auction platform to ensure a safe and fair
+              uses of our Boli platform to ensure a safe and fair
               environment for all users.
             </p>
           </section>

@@ -18,7 +18,7 @@ export default function TermsOfService() {
               Acceptance of Terms
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              By accessing and using our online auction platform, you accept and
+              By accessing and using our Boli platform, you accept and
               agree to be bound by the terms and provision of this agreement.
             </p>
           </section>

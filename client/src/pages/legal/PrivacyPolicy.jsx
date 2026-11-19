@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
               Introduction
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              This Privacy Policy describes how our online auction platform
+              This Privacy Policy describes how our Boli platform
               ("we," "our," or "us") collects, uses, and protects your
               information when you use our service.
             </p>
