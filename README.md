@@ -116,5 +116,4 @@ Password: admin1234
 See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Credits and license
-
-Boli started from the open-source [Auction Management System](https://github.com/unnati-joshi/Auction-Management-System), which carries an MIT license by Avnish Kumar. The login, profile, legal pages and base app structure come from that project. The original copyright notice is kept in [LICENSE](LICENSE), as the license requires.
+The original copyright notice is kept in [LICENSE](LICENSE), as the license requires.
