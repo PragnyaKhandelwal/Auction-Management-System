@@ -11,6 +11,8 @@ import LoadingScreen from "../components/LoadingScreen.jsx";
 import { BidPanel } from "../components/BidPanel.jsx";
 import { PriceChart } from "../components/PriceChart.jsx";
 import { DownloadReportButton } from "../components/DownloadReportButton.jsx";
+import { ReviewPanel } from "../components/ReviewPanel.jsx";
+import { SellerTrust, VerifiedBadge } from "../components/SellerTrust.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { FORMATS, dutchPriceAt, formatRs } from "../utils/auction.js";
 import { IoHeart, IoHeartOutline } from "react-icons/io5";
@@ -491,6 +493,18 @@ export const ViewAuction = () => {
               </div>
             )}
 
+            {data.review?.role && (
+              <ReviewPanel
+                auctionId={id}
+                review={data.review}
+                otherName={
+                  data.review.role === "buyer"
+                    ? data.seller.name
+                    : data.winner?.name
+                }
+              />
+            )}
+
             {/* Bid Panel */}
             {!isSeller && isActive && (
               <BidPanel auction={data} currentUserId={currentUserId} />
@@ -540,11 +554,16 @@ export const ViewAuction = () => {
                 >
                   {data.seller.name?.charAt(0)?.toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 flex flex-wrap items-center gap-1.5">
                     {data.seller.name}
+                    {data.sellerTrust?.verified && <VerifiedBadge />}
                   </p>
-                  <p className="text-xs text-gray-400">Auction creator</p>
+                  {data.sellerTrust ? (
+                    <SellerTrust trust={data.sellerTrust} />
+                  ) : (
+                    <p className="text-xs text-gray-400">Auction creator</p>
+                  )}
                 </div>
               </div>
             </div>

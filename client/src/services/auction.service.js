@@ -136,3 +136,9 @@ export const downloadBidReport = (id) =>
     (config) => api.get(`/auction/${id}/report`, config),
     `boli-lot-${id}-bids.csv`,
   );
+
+// rate the other side of a settled sale (winner or seller only)
+export const reviewAuction = async ({ id, rating, comment }) => {
+  const res = await api.post(`/auction/${id}/review`, { rating, comment });
+  return res.data;
+};
