@@ -16,6 +16,7 @@ import {
   createAuction,
   dashboardStats,
   downloadBidReport,
+  reviewAuction,
 } from "../services/auction.service.js";
 
 export const useGetAuctions = (page = 1, filters = {}) => {
@@ -185,5 +186,15 @@ export const usePrefetchHandlers = () => {
 export const useDownloadBidReport = (id) => {
   return useMutation({
     mutationFn: () => downloadBidReport(id),
+  });
+};
+
+export const useReviewAuction = (id) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rating, comment }) => reviewAuction({ id, rating, comment }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auction", id] });
+    },
   });
 };

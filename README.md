@@ -20,6 +20,7 @@
 - **Server-side search:** full-text search, category and format filters, and sorting.
 - **Price chart:** the price history of each lot.
 - **Bid reports (CSV):** sellers and admins download the full bid log of a settled lot (timestamps, anonymized bidder IDs, proxy flags and amounts), and admins download every lot settled in the Fair Play window from the monitor page.
+- **Ratings and verified sellers:** after a sale settles, the winner rates the seller and the seller rates the winner (1 to 5 stars, optional review). Lot pages show the seller's average buyer rating and completed sales, and sellers with 3 or more sales and an average of 4 stars or higher get a verified badge.
 
 ## Run it locally
 

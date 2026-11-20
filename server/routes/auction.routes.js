@@ -11,6 +11,7 @@ import {
   myAuction,
   myBids,
   bidReport,
+  reviewAuction,
 } from "../controllers/auction.controller.js";
 import { secureRoute } from "../middleware/auth.middleware.js";
 
@@ -33,5 +34,6 @@ auctionRoutes.get("/:id/report", bidReport);
 auctionRoutes.post("/:id/bid", placeBid);
 auctionRoutes.post("/:id/buy", buyAuction);
 auctionRoutes.post("/:id/watch", toggleWatch);
+auctionRoutes.post("/:id/review", reviewAuction);
 
 export default auctionRoutes;

@@ -9,7 +9,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["outbid", "won", "lost", "sold", "unsold", "ending_soon"],
+      enum: ["outbid", "won", "lost", "sold", "unsold", "ending_soon", "review"],
       required: true,
     },
     message: {

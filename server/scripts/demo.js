@@ -31,6 +31,7 @@ const art = (emoji, from, to) => {
 const seed = async () => {
   const { default: User } = await import("../models/user.model.js");
   const { default: Product } = await import("../models/product.model.js");
+  const { default: Review } = await import("../models/review.model.js");
 
   const password = await bcrypt.hash(PASSWORD, 10);
   const person = (name, role, ipAddress) => ({
@@ -206,10 +207,25 @@ const seed = async () => {
       },
     ],
   });
-  await Product.create([
+  const [madhubani, tanjore, warli] = await Product.create([
     closed("Madhubani panel", kabir, vikram, meera, 1200),
     closed("Tanjore miniature", kabir, vikram, asha, 1400),
     closed("Warli wall hanging", kabir, vikram, rohan, 1300),
+  ]);
+
+  // Buyer ratings that earn Kabir the verified seller badge
+  const buyerReview = (auction, reviewer, rating, comment) => ({
+    auction: auction._id,
+    reviewer: reviewer._id,
+    reviewee: kabir._id,
+    role: "buyer",
+    rating,
+    comment,
+  });
+  await Review.create([
+    buyerReview(madhubani, meera, 5, "Packed with care and shipped the next day."),
+    buyerReview(tanjore, asha, 5, "Exactly as described."),
+    buyerReview(warli, rohan, 4, "Lovely piece, delivery took a little longer."),
   ]);
 };
 
