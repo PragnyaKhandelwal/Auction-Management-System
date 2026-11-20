@@ -60,6 +60,12 @@ Boli uses a **split-stack architecture**: the Express/Socket.IO API and backgrou
 - **Frontend (Vercel):** https://auction-management-system-sigma.vercel.app
 - **Backend API (Render):** https://boli-g9fd.onrender.com
 
+  To view the admin functions: 
+```bash
+Email:admin@admin.com
+Password: admin1234
+```
+
 ### Environment Variables
 
 #### Backend (`server/`) — Render
