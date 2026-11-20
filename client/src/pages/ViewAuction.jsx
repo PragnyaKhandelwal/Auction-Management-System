@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useSelector } from "react-redux";
-import { useViewAuction, useToggleWatch } from "../hooks/useAuction.js";
+import {
+  useViewAuction,
+  useToggleWatch,
+  useDownloadBidReport,
+} from "../hooks/useAuction.js";
 import { useSocket } from "../hooks/useSocket.js";
 import LoadingScreen from "../components/LoadingScreen.jsx";
 import { BidPanel } from "../components/BidPanel.jsx";
 import { PriceChart } from "../components/PriceChart.jsx";
+import { DownloadReportButton } from "../components/DownloadReportButton.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { FORMATS, dutchPriceAt, formatRs } from "../utils/auction.js";
 import { IoHeart, IoHeartOutline } from "react-icons/io5";
@@ -24,6 +29,7 @@ export const ViewAuction = () => {
 
   const { data: fetchedData, isLoading, error } = useViewAuction(id);
   const { mutate: toggleWatch } = useToggleWatch(id);
+  const bidReport = useDownloadBidReport(id);
   const { activeUsers, liveAuction, socketError, isConnected } = useSocket(
     id,
     currentUserId,
@@ -65,6 +71,8 @@ export const ViewAuction = () => {
   const timeLeft = Math.max(0, new Date(data.itemEndDate) - new Date());
   const isActive = timeLeft > 0 && !data.settledAt;
   const isSeller = data.seller._id === currentUserId;
+  const canDownloadReport =
+    !!data.settledAt && (isSeller || user?.user?.role === "admin");
   const winnerData = data.winner;
   const format = FORMATS[data.format] || FORMATS.english;
   const isSealed = data.format === "sealed";
@@ -467,6 +475,19 @@ export const ViewAuction = () => {
                   Bidding closed below the seller&apos;s reserve, so this item
                   did not sell.
                 </p>
+              </div>
+            )}
+
+            {canDownloadReport && (
+              <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Bid report
+                </h3>
+                <p className="text-xs text-gray-500 mt-1 mb-3">
+                  Every bid in order, with anonymized bidder IDs and proxy
+                  flags, for your records or an audit.
+                </p>
+                <DownloadReportButton download={bidReport} />
               </div>
             )}
 

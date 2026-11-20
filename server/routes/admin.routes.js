@@ -3,6 +3,7 @@ import {
   getAdminDashboard,
   getAllUsers,
   getFairPlayReport,
+  getSettlementReport,
 } from "../controllers/admin.controller.js";
 import { checkAdmin, secureRoute } from "../middleware/auth.middleware.js";
 
@@ -12,5 +13,6 @@ adminRoutes.use(secureRoute);
 adminRoutes.get("/dashboard", checkAdmin, getAdminDashboard);
 adminRoutes.get("/users", checkAdmin, getAllUsers);
 adminRoutes.get("/fair-play", checkAdmin, getFairPlayReport);
+adminRoutes.get("/fair-play/report", checkAdmin, getSettlementReport);
 
 export default adminRoutes;

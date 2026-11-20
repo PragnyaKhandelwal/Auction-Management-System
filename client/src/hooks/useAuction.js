@@ -15,6 +15,7 @@ import {
   placeBid,
   createAuction,
   dashboardStats,
+  downloadBidReport,
 } from "../services/auction.service.js";
 
 export const useGetAuctions = (page = 1, filters = {}) => {
@@ -179,4 +180,10 @@ export const usePrefetchHandlers = () => {
     prefetchMyBids,
     prefetchDashboard,
   };
+};
+
+export const useDownloadBidReport = (id) => {
+  return useMutation({
+    mutationFn: () => downloadBidReport(id),
+  });
 };

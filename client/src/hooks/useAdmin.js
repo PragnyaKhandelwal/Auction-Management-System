@@ -5,6 +5,7 @@ import {
   updateUserRole,
   deleteUser,
   toggleUserStatus,
+  downloadSettlementReport,
 } from "../services/admin.service.js";
 
 export const useAdminDashboard = () => {
@@ -62,5 +63,11 @@ export const useToggleUserStatus = () => {
       queryClient.invalidateQueries(["allUsers"]);
       queryClient.invalidateQueries(["adminDashboard"]);
     },
+  });
+};
+
+export const useDownloadSettlementReport = () => {
+  return useMutation({
+    mutationFn: downloadSettlementReport,
   });
 };
