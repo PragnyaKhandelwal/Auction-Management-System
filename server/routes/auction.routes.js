@@ -10,6 +10,7 @@ import {
   dashboardData,
   myAuction,
   myBids,
+  bidReport,
 } from "../controllers/auction.controller.js";
 import { secureRoute } from "../middleware/auth.middleware.js";
 
@@ -28,6 +29,7 @@ auctionRoutes.get("/mybids", myBids);
 auctionRoutes.get("/watchlist", watchlist);
 
 auctionRoutes.get("/:id", auctionById);
+auctionRoutes.get("/:id/report", bidReport);
 auctionRoutes.post("/:id/bid", placeBid);
 auctionRoutes.post("/:id/buy", buyAuction);
 auctionRoutes.post("/:id/watch", toggleWatch);

@@ -1,14 +1,50 @@
 import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 import { analyzeFairPlay } from "../services/fairPlay.js";
+import {
+  bidLogRows,
+  stablePseudonyms,
+  toCsv,
+} from "../services/bidReport.js";
+import { env } from "../config/env.config.js";
 
 const FAIR_PLAY_LOOKBACK_DAYS = 90;
 
+const lookbackStart = () =>
+  new Date(Date.now() - FAIR_PLAY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+
+// Bid logs of every lot settled in the Fair Play window, as one CSV
+export const getSettlementReport = async (req, res) => {
+  try {
+    const auctions = await Product.find({
+      settledAt: { $gte: lookbackStart() },
+      "bids.0": { $exists: true },
+    })
+      .select("itemName format outcome settledAt currentPrice winner bids")
+      .sort({ settledAt: 1 })
+      .lean();
+
+    // Same person, same ID on every lot, so cross-lot patterns stay visible
+    const pseudonymFor = stablePseudonyms(env.jwt_secret);
+    const rows = auctions.flatMap((a) => bidLogRows(a, pseudonymFor));
+    const day = new Date().toISOString().slice(0, 10);
+
+    res
+      .status(200)
+      .type("text/csv; charset=utf-8")
+      .attachment(`boli-settlement-report-${day}.csv`)
+      .send(toCsv(rows));
+  } catch (error) {
+    res.status(500).json({
+      message: "Error building settlement report",
+      error: error.message,
+    });
+  }
+};
+
 export const getFairPlayReport = async (req, res) => {
   try {
-    const since = new Date(
-      Date.now() - FAIR_PLAY_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
-    );
+    const since = lookbackStart();
     const auctions = await Product.find({
       updatedAt: { $gte: since },
       "bids.0": { $exists: true },

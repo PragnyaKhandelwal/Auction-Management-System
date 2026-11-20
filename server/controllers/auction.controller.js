@@ -10,6 +10,7 @@ import {
   settleAuction,
   toPublicAuction,
 } from "../services/bidding.service.js";
+import { bidLogRows, toCsv } from "../services/bidReport.js";
 
 const optionalNumber = (value) =>
   value === "" || value == null ? null : Number(value);
@@ -196,9 +197,9 @@ export const auctionById = async (req, res) => {
     const viewer = await User.findById(userId).select("watchlist");
     const isWatching = !!viewer?.watchlist?.some((w) => w.toString() === id);
 
-    // If auction is expired, only allow seller, bidders and watchers to view it
+    // If auction is expired, only allow seller, bidders, watchers and admins to view it
     const isExpired = new Date(auction.itemEndDate) <= new Date();
-    if (isExpired) {
+    if (isExpired && req.user.role !== "admin") {
       const isSeller = auction.seller._id.toString() === userId;
       const isBidder = auction.bids.some(
         (b) => b.bidder?._id?.toString() === userId,
@@ -414,5 +415,44 @@ export const myBids = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Error fetching my bids", error: error.message });
+  }
+};
+
+// Settled lot's bid log as CSV, for its seller or an admin
+export const bidReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    const auction = await Product.findById(id)
+      .select("itemName format outcome settledAt currentPrice seller winner bids")
+      .lean();
+    if (!auction) {
+      return res.status(404).json({ message: "Auction not found" });
+    }
+
+    const isSeller = auction.seller.toString() === req.user.id;
+    if (!isSeller && req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Only the seller or an admin can download this report" });
+    }
+    if (!auction.settledAt) {
+      return res
+        .status(409)
+        .json({ message: "The report is available once the auction settles" });
+    }
+
+    res
+      .status(200)
+      .type("text/csv; charset=utf-8")
+      .attachment(`boli-lot-${id}-bids.csv`)
+      .send(toCsv(bidLogRows(auction)));
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error building bid report", error: error.message });
   }
 };
