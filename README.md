@@ -53,9 +53,57 @@ The tests cover the pure auction rules and run the bidding service against a rea
 
 ## Deploying
 
-The client needs `VITE_API` set to the API URL. The server needs `MONGO_URL`, `JWT_SECRET` and `ORIGIN`, plus these optional variables: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `RESEND_API_KEY`, `CONTACT_EMAIL` and `MAIL_FROM`. Without Cloudinary keys, new listings use a placeholder image. Without the three email settings, the contact form says it is unavailable.
+Boli uses a **split-stack architecture**: the Express/Socket.IO API and background settlement worker run on a long-running Node host (**Render**), while the Vite React client is deployed as a static SPA (**Vercel**) backed by **MongoDB Atlas**.
 
-Host the API on a long-running Node server (`npm start`), such as Render or Railway. Socket.IO and the settlement worker do not run on serverless hosts like Vercel.
+### Live Deployment
+
+- **Frontend (Vercel):** https://auction-management-system-sigma.vercel.app
+- **Backend API (Render):** https://boli-g9fd.onrender.com
+
+### Environment Variables
+
+#### Backend (`server/`) — Render
+
+| Variable | Required | Description |
+|---|---|---|
+| `MONGO_URL` / `MONGO_URI` | Yes | MongoDB Atlas connection string |
+| `JWT_SECRET` | Yes | Secret key used to sign session JWT tokens |
+| `ORIGIN` | Yes | Single plain frontend URL for CORS (e.g., `https://auction-management-system-sigma.vercel.app`, no trailing slash or Markdown formatting) |
+| `CLOUDINARY_CLOUD_NAME` | No | Cloudinary cloud name for listing image uploads |
+| `CLOUDINARY_API_KEY` | No | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | No | Cloudinary API secret (falls back to a placeholder image if omitted) |
+| `RESEND_API_KEY` | No | Resend API key for contact form emails |
+| `CONTACT_EMAIL` | No | Destination inbox for contact form submissions |
+| `MAIL_FROM` | No | Verified sender address (contact form reports unavailable if email vars are omitted) |
+
+#### Frontend (`client/`) — Vercel
+
+| Variable | Required | Type | Description |
+|---|---|---|---|
+| `VITE_API` | Yes | Config | Plain URL of the deployed Render backend (e.g., `https://boli-g9fd.onrender.com`, no trailing slash) |
+
+### Step-by-Step Deployment Guide
+
+1. **Database (MongoDB Atlas):**
+   - Create a free M0 cluster, add a database user, and allow network access (`0.0.0.0/0`) so Render can connect.
+   - Copy the connection string for `MONGO_URL` / `MONGO_URI`.
+
+2. **Backend API (Render Web Service):**
+   - Create a new **Web Service** connected to this GitHub repository.
+   - Set **Root Directory** to `server`, **Build Command** to `npm install`, and **Start Command** to `npm start`.
+   - Add `MONGO_URL`, `MONGO_URI`, `JWT_SECRET`, and `ORIGIN` (set to your exact Vercel domain, e.g., `https://auction-management-system-sigma.vercel.app`).
+   - Note: Visiting the root backend URL (`/`) returns `Cannot GET /` because Express only exposes API routes (`/auth/...`, `/auction/...`, `/user`, etc.). Socket.IO and the automatic settlement worker require this persistent Node runtime and will not run on serverless hosts.
+
+3. **Frontend Client (Vercel):**
+   - Import the repository on Vercel (project names must be lowercase) and set **Root Directory** to `client` with **Framework Preset** set to `Vite`.
+   - Add `VITE_API` as a **Config** environment variable pointing to your Render URL (`https://boli-g9fd.onrender.com`), then trigger a **Redeploy** with build cache disabled so Vite embeds the API URL.
+   - Ensure `client/vercel.json` is present so client-side routes (`/login`, `/signup`, `/dashboard`, `/auction/:id`) do not return `404` on page refresh:
+     ```json
+     {
+       "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+     }
+     ```
+   - Production databases start empty (`demo1234` accounts exist only in local `npm run demo` mode). Register a fresh account via `/signup` on the live site, and optionally update that user's `role` to `"admin"` in MongoDB Atlas Data Explorer to access the **Fair Play** monitor.
 
 ## How it fits together
 
