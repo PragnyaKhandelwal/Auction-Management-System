@@ -11,6 +11,12 @@ import {
   toPublicAuction,
 } from "../services/bidding.service.js";
 import { bidLogRows, toCsv } from "../services/bidReport.js";
+import {
+  ReviewError,
+  getSellerTrust,
+  reviewStateFor,
+  submitReview,
+} from "../services/review.service.js";
 
 const optionalNumber = (value) =>
   value === "" || value == null ? null : Number(value);
@@ -213,9 +219,16 @@ export const auctionById = async (req, res) => {
 
     auction.bids.sort((a, b) => new Date(b.bidTime) - new Date(a.bidTime));
 
+    const [sellerTrust, review] = await Promise.all([
+      getSellerTrust(auction.seller._id),
+      reviewStateFor(auction, userId),
+    ]);
+
     res.status(200).json({
       ...toPublicAuction(auction, userId),
       isWatching,
+      sellerTrust,
+      review,
     });
   } catch (error) {
     return res
@@ -454,5 +467,25 @@ export const bidReport = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error building bid report", error: error.message });
+  }
+};
+
+// Winner rates the seller, or seller rates the winner, once a sale settles
+export const reviewAuction = async (req, res) => {
+  try {
+    const review = await submitReview({
+      auctionId: req.params.id,
+      userId: req.user.id,
+      rating: req.body?.rating,
+      comment: req.body?.comment,
+    });
+    res.status(201).json({ message: "Thanks for your review", review });
+  } catch (error) {
+    if (error instanceof ReviewError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    res
+      .status(500)
+      .json({ message: "Error saving review", error: error.message });
   }
 };
