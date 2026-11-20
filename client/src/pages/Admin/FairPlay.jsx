@@ -4,6 +4,8 @@ import { MdErrorOutline, MdInfoOutline, MdWarningAmber } from "react-icons/md";
 import LoadingScreen from "../../components/LoadingScreen";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { getFairPlayReport } from "../../services/admin.service";
+import { useDownloadSettlementReport } from "../../hooks/useAdmin";
+import { DownloadReportButton } from "../../components/DownloadReportButton";
 
 const severityStyles = {
   high: {
@@ -29,6 +31,7 @@ export const FairPlay = () => {
     queryKey: ["fairPlay"],
     queryFn: getFairPlayReport,
   });
+  const settlementReport = useDownloadSettlementReport();
 
   if (isLoading) return <LoadingScreen />;
 
@@ -36,9 +39,12 @@ export const FairPlay = () => {
     <div className="min-h-screen bg-gray-50/80">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Fair Play Monitor
-          </h1>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Fair Play Monitor
+            </h1>
+            <DownloadReportButton download={settlementReport} />
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             Bidding patterns that may point to shill bidding. These are prompts
             for a human review, not proof of wrongdoing.
@@ -46,7 +52,8 @@ export const FairPlay = () => {
           {data && (
             <p className="text-xs text-gray-400 mt-2">
               Scanned {data.scanned} auctions with bids from the last{" "}
-              {data.lookbackDays} days
+              {data.lookbackDays} days. The CSV report holds the full bid
+              log of every lot settled in that window.
             </p>
           )}
         </div>

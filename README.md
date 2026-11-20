@@ -19,6 +19,7 @@
 - **Scaled bid steps:** Rs 10 on small lots up to Rs 1,000 on large ones.
 - **Server-side search:** full-text search, category and format filters, and sorting.
 - **Price chart:** the price history of each lot.
+- **Bid reports (CSV):** sellers and admins download the full bid log of a settled lot (timestamps, anonymized bidder IDs, proxy flags and amounts), and admins download every lot settled in the Fair Play window from the monitor page.
 
 ## Run it locally
 

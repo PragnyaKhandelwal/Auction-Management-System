@@ -1,5 +1,6 @@
 import axios from "axios";
 import { api } from "../config/api.js";
+import { downloadFile } from "../utils/download.js";
 
 // getting list of all auction
 export const getAuctions = async ({
@@ -128,3 +129,10 @@ export const dashboardStats = async () => {
   const res = await api.get(`/auction/stats`);
   return res.data;
 };
+
+// download a settled lot's bid log as CSV (seller or admin only)
+export const downloadBidReport = (id) =>
+  downloadFile(
+    (config) => api.get(`/auction/${id}/report`, config),
+    `boli-lot-${id}-bids.csv`,
+  );

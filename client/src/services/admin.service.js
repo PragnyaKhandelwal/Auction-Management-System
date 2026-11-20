@@ -1,4 +1,5 @@
 import { api } from "../config/api.js";
+import { downloadFile } from "../utils/download.js";
 
 
 // Get admin dashboard statistics
@@ -19,6 +20,13 @@ export const getFairPlayReport = async () => {
     const res = await api.get(`/admin/fair-play`);
     return res.data;
 };
+
+// Download bid logs of every lot settled in the Fair Play window as CSV
+export const downloadSettlementReport = () =>
+    downloadFile(
+        (config) => api.get(`/admin/fair-play/report`, config),
+        `boli-settlement-report-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
 
 // Get all users with pagination and filtering
 export const getAllUsers = async (page = 1, search = '', role = 'all', limit = 10, sortBy = 'createdAt', sortOrder = 'desc') => {
