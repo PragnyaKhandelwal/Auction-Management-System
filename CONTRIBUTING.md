@@ -1,7 +1,7 @@
 # Contributing Guidelines
 
 Hi there!
-Thanks for showing interest in contributing to the **Online Auction System**. We welcome all kinds of contributions — code, design, documentation, or suggestions.
+Thanks for showing interest in contributing to **Boli**, a real-time auction house with English, Dutch and sealed-bid auctions. We welcome all kinds of contributions — code, design, documentation, or suggestions.
 
 Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
@@ -14,7 +14,9 @@ Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 - Routing: React Router v7+
 - API Handling: Centralized Axios instance (`src/services/`) + Custom hooks (`src/hooks/`)
 - Authentication: JWT with `httpOnly` cookies
-- Deployment: GitHub Actions CI/CD → AWS EC2
+- Testing: Node's built-in test runner + `mongodb-memory-server` (server)
+- CI: GitHub Actions runs the server tests and a client build on every pull request
+- Deployment: API and settlement worker on Render, client on Vercel, database on MongoDB Atlas (see the [README](README.md#deploying))
 
 ---
 
@@ -59,8 +61,12 @@ Click on the **Fork** button (top-right) and create your own copy.
 ### 2. Clone the Repo
 
 ```bash
-git clone https://github.com/your-username/online-auction-system.git
-cd online-auction-system
+git clone https://github.com/your-username/Auction-Management-System.git
+cd Auction-Management-System
+
+# Keep your fork up to date with the main project
+git remote add upstream https://github.com/PragnyaKhandelwal/Auction-Management-System.git
+git pull upstream main
 ```
 
 ### 3. Setup Project Locally
@@ -77,7 +83,21 @@ cd ../server
 npm install
 ```
 
-- Setup `.env` files (refer to the README for required environment variables)
+- The quickest way to run everything is the **demo**, which needs no MongoDB, `.env` file or API keys. It starts the API with an in-memory database and sample users and lots:
+
+```bash
+# Terminal 1
+cd server
+npm run demo
+
+# Terminal 2
+cd client
+npm run dev
+```
+
+Open http://localhost:5173 and log in as `asha@demo.test` (or `rohan`, `meera`, `kabir`, `vikram`, `admin`) with the password `demo1234`.
+
+- To work against a real database instead, create `server/.env` with `MONGO_URL`, `JWT_SECRET` and `ORIGIN`, then run `npm run dev`. The README lists every optional variable.
 
 ### 4. Create a New Branch
 
@@ -94,7 +114,23 @@ Follow existing code structure and patterns:
 - **Service + Hook pattern** for frontend API calls
 - **Socket handlers** in `server/socket/` for real-time features
 
-### 6. Commit Your Changes
+### 6. Test Your Changes
+
+Run the same checks that CI runs on every pull request, and make sure both pass:
+
+```bash
+# Server tests (no database or network needed)
+cd server
+npm test
+
+# Client build
+cd ../client
+npm run build
+```
+
+Add tests to `server/test/` for new server behaviour. Database tests use `mongodb-memory-server`; see the existing tests for the pattern.
+
+### 7. Commit Your Changes
 
 Use conventional commit messages:
 
@@ -105,13 +141,18 @@ git commit -m "feat: add live notification for bid updates"
 
 Common prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `style:`, `test:`, `chore:`
 
-### 7. Push and Create Pull Request
+### 8. Push and Create Pull Request
 
 ```bash
 git push origin feature/your-feature-name
 ```
 
-Then go to GitHub and open a Pull Request with a clear explanation.
+Then open a Pull Request against `main` on GitHub:
+
+- Fill in the pull request template, including how you tested the change.
+- Link the issue it resolves with `Closes #<issue number>`, so the issue closes when the PR is merged.
+- Wait for the CI checks (server tests on Node 20 and 22, and the client build) to pass.
+- Never push directly to `main`.
 
 ---
 
@@ -147,4 +188,4 @@ Let's make this project better together!
 
 ---
 
-Made with love by [@theavnishkumar](https://github.com/theavnishkumar)
+Boli builds on the open-source Online Auction System by Avnish Kumar, used under the MIT license. See [LICENSE](LICENSE).
