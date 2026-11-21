@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router";
 
 // A worked example of how each format prices the same kind of bids
