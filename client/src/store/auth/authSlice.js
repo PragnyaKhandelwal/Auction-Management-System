@@ -48,6 +48,24 @@ export const signup = createAsyncThunk(
   },
 );
 
+// sign in with a Google ID token from Google Identity Services
+export const googleLogin = createAsyncThunk(
+  "auth/googleLogin",
+  async (credential, { rejectWithValue }) => {
+    try {
+      await api.post(`/auth/google`, { credential });
+
+      const response = await api.get(`/user`);
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || "Google sign-in failed",
+      );
+    }
+  },
+);
+
 // logout
 export const logout = createAsyncThunk(
   "auth/logout",
@@ -72,7 +90,12 @@ const initialState = {
 const authSlice = createSlice({
   name: "auth",
   initialState,
-  reducers: {},
+  reducers: {
+    // A Google-only account just set its first password
+    passwordSet: (state) => {
+      if (state.user?.user) state.user.user.hasPassword = true;
+    },
+  },
   extraReducers: (builder) => {
     builder
       // checkAuth
@@ -120,6 +143,18 @@ const authSlice = createSlice({
         state.loading = false;
       })
 
+      // Google sign-in: the button stays on screen, so no full-page loading
+      .addCase(googleLogin.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, { payload }) => {
+        state.user = payload;
+        state.loading = false;
+      })
+      .addCase(googleLogin.rejected, (state, { payload }) => {
+        state.error = payload;
+      })
+
       // logout
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
@@ -132,4 +167,5 @@ const authSlice = createSlice({
   },
 });
 
+export const { passwordSet } = authSlice.actions;
 export default authSlice.reducer;

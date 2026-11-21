@@ -14,6 +14,9 @@ export const env = {
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
   cloudinary_url: process.env.CLOUDINARY_URL,
   resend_api_key: process.env.RESEND_API_KEY,
+  // Optional: Google sign-in is offered only when the client ID is set
+  google_client_id: process.env.GOOGLE_CLIENT_ID,
+  google_client_secret: process.env.GOOGLE_CLIENT_SECRET,
 };
 
 // Validate critical environment variables at startup

@@ -81,6 +81,8 @@ Password: admin1234
 | `RESEND_API_KEY` | No | Resend API key for contact form emails |
 | `CONTACT_EMAIL` | No | Destination inbox for contact form submissions |
 | `MAIL_FROM` | No | Verified sender address (contact form reports unavailable if email vars are omitted) |
+| `GOOGLE_CLIENT_ID` | No | OAuth client ID from Google Cloud. When set, the login and signup pages show **Continue with Google**; when unset, the button is hidden |
+| `GOOGLE_CLIENT_SECRET` | No | OAuth client secret from the same Google Cloud client. Optional: sign-in verifies Google ID tokens, which needs only the client ID |
 
 #### Frontend (`client/`) — Vercel
 
@@ -110,6 +112,12 @@ Password: admin1234
      }
      ```
    - Production databases start empty (`demo1234` accounts exist only in local `npm run demo` mode). Register a fresh account via `/signup` on the live site, and optionally update that user's `role` to `"admin"` in MongoDB Atlas Data Explorer to access the **Fair Play** monitor.
+
+4. **Google sign-in (optional):**
+   - In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth client ID** of type **Web application**.
+   - Under **Authorized JavaScript origins**, add the frontend URL (e.g., `https://auction-management-system-sigma.vercel.app`) and `http://localhost:5173` for local testing. No redirect URI is needed, because sign-in uses a Google popup.
+   - Add `GOOGLE_CLIENT_ID` (and optionally `GOOGLE_CLIENT_SECRET`) to the Render backend and redeploy. The client reads the ID from the API, so Vercel needs no change.
+   - Signing in with Google links to an existing account with the same email, as long as Google has verified that email, so existing users keep their role, bids and listings. People who sign up with Google can set a password later in **Profile** if they also want to log in with their email.
 
 ## How it fits together
 
