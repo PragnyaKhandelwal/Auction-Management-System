@@ -2,16 +2,17 @@ import Login from "../models/login.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
+import { avatarUrl } from "../utils/images.js";
 
 export const handleGetUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select(
-      "name email avatar role",
-    );
+    const user = await User.findById(req.user.id)
+      .select("name email avatar role")
+      .lean();
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({ user });
+    res.json({ user: { ...user, avatar: avatarUrl(user.avatar) } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });

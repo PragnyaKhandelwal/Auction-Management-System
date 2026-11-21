@@ -69,3 +69,47 @@ export const msToNextDutchDrop = (auction, now = Date.now()) => {
   if (elapsed < 0) return interval;
   return interval - (elapsed % interval);
 };
+
+// Same listing rules and messages as the server's validateListing, checked
+// before submitting so a mistake shows at once instead of as a failed request.
+// The server still checks everything itself.
+const wholeRupees = (value) => Number.isInteger(value) && value > 0;
+const optional = (value) => (value === "" || value == null ? null : Number(value));
+
+export const listingError = (form) => {
+  const format = form.format || "english";
+  const startingPrice = Number(form.startingPrice);
+  const reservePrice = format === "dutch" ? null : optional(form.reservePrice);
+  const buyNowPrice = format === "english" ? optional(form.buyNowPrice) : null;
+
+  if (!wholeRupees(startingPrice)) {
+    return "Starting price must be a whole number of rupees";
+  }
+  if (format === "dutch") {
+    const floor = optional(form.dutchFloor);
+    if (!wholeRupees(floor) || floor >= startingPrice) {
+      return "Floor price must be below the opening price";
+    }
+    if (
+      !wholeRupees(optional(form.dutchDropAmount)) ||
+      !wholeRupees(optional(form.dutchDropMinutes))
+    ) {
+      return "Set how much the price drops and how often";
+    }
+    return null;
+  }
+  if (reservePrice != null) {
+    if (!wholeRupees(reservePrice) || reservePrice < startingPrice) {
+      return "Reserve price must be at or above the starting price";
+    }
+  }
+  if (buyNowPrice != null) {
+    if (!wholeRupees(buyNowPrice) || buyNowPrice <= startingPrice) {
+      return "Buy Now price must be above the starting price";
+    }
+    if (reservePrice != null && buyNowPrice < reservePrice) {
+      return "Buy Now price must be at or above the reserve";
+    }
+  }
+  return null;
+};

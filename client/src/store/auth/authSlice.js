@@ -6,7 +6,9 @@ export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/user`);
+      // Answers 200 for logged-out visitors too, so no console error
+      const response = await api.get(`/auth/session`);
+      if (!response.data?.user) return rejectWithValue("Not authenticated");
       return response.data;
     } catch (error) {
       return rejectWithValue("Not authenticated");

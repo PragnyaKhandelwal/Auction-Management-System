@@ -4,6 +4,9 @@ import bcrypt from "bcrypt";
 import { generateToken } from "../utils/jwt.js";
 import { getClientIp, getLocationFromIp } from "../utils/geoDetails.js";
 import { clearCookie, setCookie } from "../utils/cookies.util.js";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env.config.js";
+import { avatarUrl } from "../utils/images.js";
 
 export const handleUserLogin = async (req, res) => {
   const { email, password } = req.body;
@@ -93,7 +96,6 @@ export const handleUserSignup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      avatar: "https://avatar.iran.liara.run/public/7",
       ipAddress: ip,
       userAgent,
       location,
@@ -127,4 +129,19 @@ export const handleUserSignup = async (req, res) => {
 export const handleUserLogout = async (req, res) => {
   clearCookie(res);
   return res.status(200).json({ message: "Logged out successfully" });
+};
+
+// Who is signed in, if anyone. Answers 200 either way, so a logged-out visit
+// does not log a failed request in the browser console.
+export const handleSession = async (req, res) => {
+  const token = req.cookies?.auth_token;
+  if (!token) return res.status(200).json({ user: null });
+  try {
+    const { id } = jwt.verify(token, env.jwt_secret);
+    const user = await User.findById(id).select("name email avatar role").lean();
+    if (!user) return res.status(200).json({ user: null });
+    res.status(200).json({ user: { ...user, avatar: avatarUrl(user.avatar) } });
+  } catch {
+    res.status(200).json({ user: null });
+  }
 };

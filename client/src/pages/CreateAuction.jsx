@@ -6,7 +6,7 @@ import {
   getUploadSignature,
   uploadImageToCloudinary,
 } from "../services/auction.service.js";
-import { CATEGORIES, FORMATS } from "../utils/auction.js";
+import { CATEGORIES, FORMATS, listingError } from "../utils/auction.js";
 
 const EMPTY_FORM = {
   itemName: "",
@@ -153,7 +153,8 @@ export const CreateAuction = () => {
         uploadedMetaRef.current = {
           formId: signatureData.formId,
           public_id: "demo",
-          secure_url: `https://picsum.photos/seed/${signatureData.formId}/800/600`,
+          // The server replaces this with category artwork
+          secure_url: "placeholder",
         };
         setUploadProgress(100);
         return;
@@ -212,6 +213,12 @@ export const CreateAuction = () => {
 
     if (end <= start) {
       setError("End date must be after start date.");
+      return;
+    }
+
+    const invalid = listingError(formData);
+    if (invalid) {
+      setError(invalid);
       return;
     }
 
