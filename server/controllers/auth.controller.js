@@ -6,7 +6,13 @@ import { getClientIp, getLocationFromIp } from "../utils/geoDetails.js";
 import { clearCookie, setCookie } from "../utils/cookies.util.js";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.config.js";
-import { avatarUrl } from "../utils/images.js";
+import { PUBLIC_USER_FIELDS, toPublicUser } from "../utils/publicUser.js";
+import {
+  GoogleAuthError,
+  findOrCreateGoogleUser,
+  googleEnabled,
+  verifyGoogleCredential,
+} from "../services/googleAuth.service.js";
 
 export const handleUserLogin = async (req, res) => {
   const { email, password } = req.body;
@@ -16,6 +22,11 @@ export const handleUserLogin = async (req, res) => {
     const user = await User.findOne({ email });
     //  Checking user exists — use same message to prevent user enumeration
     if (!user) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Accounts created with Google have no password: same message as a wrong one
+    if (!user.password) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
@@ -138,10 +149,72 @@ export const handleSession = async (req, res) => {
   if (!token) return res.status(200).json({ user: null });
   try {
     const { id } = jwt.verify(token, env.jwt_secret);
-    const user = await User.findById(id).select("name email avatar role").lean();
+    const user = await User.findById(id).select(PUBLIC_USER_FIELDS).lean();
     if (!user) return res.status(200).json({ user: null });
-    res.status(200).json({ user: { ...user, avatar: avatarUrl(user.avatar) } });
+    res.status(200).json({ user: toPublicUser(user) });
   } catch {
     res.status(200).json({ user: null });
+  }
+};
+
+// Whether the login and signup pages should offer "Continue with Google"
+export const handleGoogleConfig = (req, res) => {
+  res.status(200).json({
+    enabled: googleEnabled(),
+    clientId: googleEnabled() ? env.google_client_id : null,
+  });
+};
+
+// Signs in with a Google ID token: links Google to an account with the same
+// verified email, or creates a new account, then issues the usual JWT cookie.
+export const handleGoogleLogin = async (req, res) => {
+  if (!googleEnabled()) {
+    return res.status(404).json({ error: "Google sign-in is not available" });
+  }
+  const { credential } = req.body ?? {};
+  if (typeof credential !== "string" || !credential) {
+    return res.status(400).json({ error: "Missing Google credential" });
+  }
+
+  let profile;
+  try {
+    profile = await verifyGoogleCredential(credential);
+  } catch {
+    return res
+      .status(401)
+      .json({ error: "Google sign-in failed. Please try again." });
+  }
+
+  try {
+    const { user, created, linked } = await findOrCreateGoogleUser(profile);
+
+    setCookie(res, generateToken(user._id, user.role));
+
+    const ip = getClientIp(req);
+    const userAgent = req.headers["user-agent"];
+    const location = await getLocationFromIp(ip);
+    await User.findByIdAndUpdate(user._id, {
+      lastLogin: new Date(),
+      location,
+      ipAddress: ip,
+      userAgent,
+    });
+    await Login.create({
+      userId: user._id,
+      ipAddress: ip,
+      userAgent,
+      location,
+      loginAt: new Date(),
+    });
+
+    return res
+      .status(created ? 201 : 200)
+      .json({ message: "Login Successful", created, linked });
+  } catch (error) {
+    if (error instanceof GoogleAuthError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error("Google Login Error:", error);
+    return res.status(500).json({ error: "Server error from Google sign-in" });
   }
 };
