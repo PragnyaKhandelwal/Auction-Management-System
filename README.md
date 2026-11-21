@@ -8,6 +8,51 @@
 | **Dutch** | Falls on a fixed schedule down to a floor | First person to accept |
 | **Sealed (Vickrey)** | Hidden until the close | Highest bidder, who pays the second-highest amount |
 
+![Boli landing page: "One auction house. Three ways to sell." with a panel showing how English, Dutch and sealed auctions set the price](screenshots/landing.png)
+
+## Screenshots
+
+All screenshots come from the local demo (`npm run demo`), so every name and lot is sample data.
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="screenshots/auctions.png" alt="Auctions page with format filters, search, category and sort controls, and a grid of English, Dutch and sealed lots">
+      <p><b>Browse auctions.</b> Filter by format and category, search, and sort. Every card shows its format and time left.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="screenshots/english-auction.png" alt="English auction for a 1978 HMT watch at Rs 4,200 with a price chart, countdown, bid box, auto-bid option and Buy Now button">
+      <p><b>English auction.</b> Live price, countdown and price chart, with auto-bid up to a private limit and an optional Buy Now price.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="screenshots/dutch-auction.png" alt="Dutch auction for a brass Nataraja statue whose price has dropped from Rs 18,000 to Rs 17,250, with the next drop timer and an Accept button">
+      <p><b>Dutch auction.</b> The price falls on a schedule towards a floor, and the first person to accept wins.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="screenshots/sealed-auction.png" alt="Sealed auction for a first-edition book showing the viewer's own sealed bid, a hidden bid history, and a verified seller with a 4.7 star rating">
+      <p><b>Sealed auction.</b> Bids stay hidden until the close, and the winner pays the second-highest bid. The seller card shows a verified seller badge and rating.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="screenshots/settled-auction.png" alt="Finished auction seen by its seller: final price, winner, a Download Report (CSV) button, and a form to rate the buyer next to the buyer's 5-star review">
+      <p><b>After the sale.</b> The winner is announced, the seller can download the bid log as CSV, and buyer and seller rate each other.</p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="screenshots/fair-play.png" alt="Admin Fair Play Monitor listing a high-severity repeat underbidder flag and three medium price-pushing flags, with a Download Report (CSV) button">
+      <p><b>Fair Play monitor (admin).</b> Flags possible shill bidding, such as a bidder who always bids on one seller and never wins, and exports a settlement report.</p>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="screenshots/mobile.png" width="280" alt="The English auction page on a phone screen, with the item image and price chart stacked in one column">
+  <br>
+  <em>Works on phones too.</em>
+</p>
+
 ## Features
 
 - **Proxy bidding:** set a private limit and the server bids one step at a time for you.
