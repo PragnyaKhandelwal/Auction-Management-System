@@ -14,6 +14,7 @@ import { DownloadReportButton } from "../components/DownloadReportButton.jsx";
 import { ReviewPanel } from "../components/ReviewPanel.jsx";
 import { SellerTrust, VerifiedBadge } from "../components/SellerTrust.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { PLACEHOLDER_IMAGE, showPlaceholderOnError } from "../utils/images.js";
 import { FORMATS, dutchPriceAt, formatRs } from "../utils/auction.js";
 import { IoHeart, IoHeartOutline } from "react-icons/io5";
 
@@ -205,8 +206,9 @@ export const ViewAuction = () => {
               <div className="relative group">
                 <div className="aspect-[4/3] bg-white rounded-2xl overflow-hidden border border-gray-200/80 shadow-sm">
                   <img
-                    src={data.itemImage?.url || "https://picsum.photos/601"}
+                    src={data.itemImage?.url || PLACEHOLDER_IMAGE}
                     alt={data.itemName}
+                    onError={showPlaceholderOnError}
                     className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                   />
                 </div>

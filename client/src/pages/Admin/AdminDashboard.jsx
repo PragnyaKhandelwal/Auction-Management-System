@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import AuctionCard from "../../components/AuctionCard";
 import LoadingScreen from "../../components/LoadingScreen";
-import { getAdminDashboard, getAllUsers } from "../../api/admin";
+import { getAdminDashboard } from "../../api/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 const statConfig = [

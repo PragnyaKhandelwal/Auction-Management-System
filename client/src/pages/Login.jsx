@@ -5,6 +5,7 @@ import { login } from "../store/auth/authSlice";
 import { Link } from "react-router";
 import LoadingScreen from "../components/LoadingScreen";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
 
 const Login = () => {
   useDocumentTitle("Log In");
@@ -121,6 +122,7 @@ const Login = () => {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
+          <GoogleSignInButton text="signin_with" />
         </div>
 
         {/* Footer */}

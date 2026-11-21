@@ -15,9 +15,18 @@ const userSchema = new mongoose.Schema(
         "Please enter a valid email address",
       ],
     },
+    // Only accounts that sign in with email and password have one
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
+    },
+    // Google account ID ("sub"), set when the user signs in with Google
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     avatar: {
       type: String,

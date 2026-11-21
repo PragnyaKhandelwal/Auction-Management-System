@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { CiMail, CiUser, CiLock, CiCamera } from "react-icons/ci";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { passwordSet } from "../store/auth/authSlice";
 import { useChangePassword } from "../hooks/useUser";
+import { UserAvatar } from "../components/UserAvatar.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Profile() {
   useDocumentTitle("Profile");
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  // Accounts created with Google have no password until they set one
+  const hasPassword = user?.user?.hasPassword !== false;
   const [isError, setIsError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [formData, setFormData] = useState({
@@ -16,8 +21,9 @@ export default function Profile() {
   });
 
   const { mutate, isPending } = useChangePassword({
-    onSuccess: () => {
-      setSuccessMessage("Password Changed Successfully");
+    onSuccess: (data) => {
+      setSuccessMessage(data?.message || "Password Changed Successfully");
+      if (!hasPassword) dispatch(passwordSet());
       setTimeout(() => {
         setSuccessMessage("");
       }, 10000);
@@ -44,7 +50,7 @@ export default function Profile() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const { currentPassword, newPassword, confirmPassword } = formData;
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if ((hasPassword && !currentPassword) || !newPassword || !confirmPassword) {
       setIsError("Please enter all fields");
       setTimeout(() => {
         setIsError("");
@@ -105,10 +111,10 @@ export default function Profile() {
             <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row items-center">
                 <div className="relative mb-4 sm:mb-0">
-                  <img
-                    src={user.user.avatar}
-                    alt="User avatar"
-                    className="h-20 w-20 rounded-full bg-gray-200 mx-auto sm:mx-0"
+                  <UserAvatar
+                    user={user.user}
+                    className="h-20 w-20 rounded-full mx-auto sm:mx-0"
+                    textClassName="text-2xl"
                   />
                   <button className="absolute bottom-0 right-0 sm:right-0 bg-white rounded-full p-1 border border-gray-300 shadow-sm">
                     <CiCamera className="h-4 w-4 text-gray-500" />
@@ -183,31 +189,39 @@ export default function Profile() {
               {/* Password */}
               <div className="px-4 py-5 sm:p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Change Password
+                  {hasPassword ? "Change Password" : "Set a Password"}
                 </h3>
+                {!hasPassword && (
+                  <p className="text-sm text-gray-500 -mt-2 mb-4">
+                    You sign in with Google. Set a password if you also want to
+                    log in with your email address.
+                  </p>
+                )}
                 <div className="grid grid-cols-1 gap-6">
-                  <div>
-                    <label
-                      htmlFor="currentPassword"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Current Password
-                    </label>
-                    <div className="relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <CiLock className="h-5 w-5 text-gray-400" />
+                  {hasPassword && (
+                    <div>
+                      <label
+                        htmlFor="currentPassword"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Current Password
+                      </label>
+                      <div className="relative rounded-md shadow-sm">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <CiLock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          id="currentPassword"
+                          value={formData.currentPassword}
+                          onChange={handleChange}
+                          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                          placeholder="Enter your current password"
+                        />
                       </div>
-                      <input
-                        type="password"
-                        name="currentPassword"
-                        id="currentPassword"
-                        value={formData.currentPassword}
-                        onChange={handleChange}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-                        placeholder="Enter your current password"
-                      />
                     </div>
-                  </div>
+                  )}
 
                   <div>
                     <label

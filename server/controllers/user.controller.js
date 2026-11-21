@@ -2,16 +2,17 @@ import Login from "../models/login.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
+import { PUBLIC_USER_FIELDS, toPublicUser } from "../utils/publicUser.js";
 
 export const handleGetUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select(
-      "name email avatar role",
-    );
+    const user = await User.findById(req.user.id)
+      .select(PUBLIC_USER_FIELDS)
+      .lean();
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({ user });
+    res.json({ user: toPublicUser(user) });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Server error" });
@@ -20,8 +21,20 @@ export const handleGetUser = async (req, res) => {
 
 export const handleChangePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword, confirmPassword } = req.body;
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    const { currentPassword, newPassword, confirmPassword } = req.body ?? {};
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    // Accounts created with Google have no password yet, so they set a first one
+    const settingFirstPassword = !user.password;
+
+    if (
+      (!settingFirstPassword && !currentPassword) ||
+      !newPassword ||
+      !confirmPassword
+    ) {
       return res.status(400).json({ error: "Please enter all fields" });
     }
 
@@ -30,7 +43,7 @@ export const handleChangePassword = async (req, res) => {
         .status(400)
         .json({ error: "New password and confirm password do not match." });
     }
-    if (currentPassword === newPassword) {
+    if (!settingFirstPassword && currentPassword === newPassword) {
       return res
         .status(400)
         .json({ error: "You can't reuse the old password." });
@@ -42,27 +55,24 @@ export const handleChangePassword = async (req, res) => {
         .json({ error: "New password must be at least 8 characters long." });
     }
 
-    const userID = req.user.id;
-
-    const user = await User.findById(userID);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    if (!settingFirstPassword) {
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Current password is incorrect." });
+      }
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      currentPassword,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Current password is incorrect." });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    return res.status(200).json({ message: "Password changed successfully." });
+    return res.status(200).json({
+      message: settingFirstPassword
+        ? "Password set. You can now also log in with your email."
+        : "Password changed successfully.",
+    });
   } catch (err) {
     console.error("Error changing password:", err);
     return res

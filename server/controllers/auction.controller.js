@@ -2,6 +2,8 @@ import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import Upload from "../models/upload.model.js";
+import { env } from "../config/env.config.js";
+import { listingImageUrl, placeholderImage } from "../utils/images.js";
 import { dutchPriceAt, validateListing } from "../services/auctionRules.js";
 import {
   BidError,
@@ -38,7 +40,7 @@ const toCard = (item, now = new Date()) => ({
   startsIn: Math.max(0, new Date(item.itemStartDate) - now),
   itemCategory: item.itemCategory,
   sellerName: item.seller?.name,
-  itemPhoto: item.itemImage?.url,
+  itemPhoto: listingImageUrl(item),
   format: item.format,
   buyNowPrice: item.buyNowPrice,
   outcome: item.outcome,
@@ -119,10 +121,11 @@ export const createAuction = async (req, res) => {
       currentPrice: listing.startingPrice,
       itemDescription,
       itemCategory,
-      itemImage: {
-        public_id,
-        url: secure_url,
-      },
+      // Without Cloudinary keys there is no real upload, so draw the image here
+      // instead of trusting a URL from the browser
+      itemImage: env.cloudinary_api_secret
+        ? { public_id, url: secure_url }
+        : { public_id: "placeholder", url: placeholderImage(itemCategory) },
       itemStartDate: start,
       itemEndDate: end,
       seller: req.user.id,

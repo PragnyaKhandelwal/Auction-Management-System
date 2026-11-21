@@ -33,7 +33,7 @@ export default function CodeOfConduct() {
               <li>Communicate professionally in all interactions</li>
               <li>Provide accurate descriptions of items for sale</li>
               <li>Honor your commitments as both buyer and seller</li>
-              <li>Respect others' privacy and personal information</li>
+              <li>Respect others&apos; privacy and personal information</li>
               <li>Follow all platform rules and guidelines</li>
             </ul>
           </section>

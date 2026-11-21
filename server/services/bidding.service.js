@@ -2,6 +2,7 @@ import Product from "../models/product.model.js";
 import User from "../models/user.model.js";
 import { getIO } from "../socket/index.js";
 import { notify } from "./notification.service.js";
+import { listingImageUrl } from "../utils/images.js";
 import {
   dutchPriceAt,
   extendedEndDate,
@@ -75,6 +76,9 @@ export const toPublicAuction = (auction, viewerId = null, now = new Date()) => {
   const raw = auction.toObject ? auction.toObject() : auction;
   const { proxyBids, sealedBids, reservePrice, ...view } = raw;
 
+  if (raw.itemImage) {
+    view.itemImage = { ...raw.itemImage, url: listingImageUrl(raw) };
+  }
   view.hasReserve = reservePrice != null;
   view.reserveMet =
     reservePrice != null ? raw.currentPrice >= reservePrice : null;
