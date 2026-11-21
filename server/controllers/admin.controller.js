@@ -7,6 +7,7 @@ import {
   toCsv,
 } from "../services/bidReport.js";
 import { env } from "../config/env.config.js";
+import { avatarUrl, listingImageUrl } from "../utils/images.js";
 
 const FAIR_PLAY_LOOKBACK_DAYS = 90;
 
@@ -91,7 +92,11 @@ export const getAdminDashboard = async (req, res) => {
     const formattedRecentActiveAuctions = recentActiveAuctions.map(
       (auction) => ({
         ...auction,
-        itemPhoto: auction.itemImage?.url || "",
+        itemImage: auction.itemImage && {
+          ...auction.itemImage,
+          url: listingImageUrl(auction),
+        },
+        itemPhoto: listingImageUrl(auction),
       }),
     );
 
@@ -99,7 +104,8 @@ export const getAdminDashboard = async (req, res) => {
     const recentUsersList = await User.find({})
       .select("name email role createdAt lastLogin location avatar")
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)
+      .lean();
 
     res.status(200).json({
       stats: {
@@ -109,7 +115,10 @@ export const getAdminDashboard = async (req, res) => {
         recentUsers,
       },
       recentAuctions: formattedRecentActiveAuctions,
-      recentUsersList: recentUsersList,
+      recentUsersList: recentUsersList.map((u) => ({
+        ...u,
+        avatar: avatarUrl(u.avatar),
+      })),
     });
   } catch (error) {
     res.status(500).json({
@@ -178,7 +187,7 @@ export const getAllUsers = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        users,
+        users: users.map((u) => ({ ...u, avatar: avatarUrl(u.avatar) })),
         pagination: {
           currentPage: page,
           totalPages,
