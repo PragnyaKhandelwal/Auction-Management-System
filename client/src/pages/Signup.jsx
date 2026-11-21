@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { signup } from "../store/auth/authSlice";
 import LoadingScreen from "../components/LoadingScreen";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
 
 const Signup = () => {
   useDocumentTitle("Sign Up");
@@ -149,6 +150,7 @@ useEffect(() => {
               {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
+          <GoogleSignInButton text="signup_with" />
         </div>
 
         {/* Footer */}
