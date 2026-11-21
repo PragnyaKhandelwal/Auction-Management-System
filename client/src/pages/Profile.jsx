@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CiMail, CiUser, CiLock, CiCamera } from "react-icons/ci";
 import { useSelector } from "react-redux";
 import { useChangePassword } from "../hooks/useUser";
+import { UserAvatar } from "../components/UserAvatar.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function Profile() {
@@ -105,10 +106,10 @@ export default function Profile() {
             <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
               <div className="flex flex-col sm:flex-row items-center">
                 <div className="relative mb-4 sm:mb-0">
-                  <img
-                    src={user.user.avatar}
-                    alt="User avatar"
-                    className="h-20 w-20 rounded-full bg-gray-200 mx-auto sm:mx-0"
+                  <UserAvatar
+                    user={user.user}
+                    className="h-20 w-20 rounded-full mx-auto sm:mx-0"
+                    textClassName="text-2xl"
                   />
                   <button className="absolute bottom-0 right-0 sm:right-0 bg-white rounded-full p-1 border border-gray-300 shadow-sm">
                     <CiCamera className="h-4 w-4 text-gray-500" />

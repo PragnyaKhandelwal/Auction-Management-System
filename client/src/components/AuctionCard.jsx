@@ -1,3 +1,4 @@
+import { PLACEHOLDER_IMAGE, showPlaceholderOnError } from "../utils/images.js";
 import { Link } from "react-router";
 import { usePrefetchHandlers } from "../hooks/useAuction.js";
 import { FORMATS, formatRs, formatTimeLeft } from "../utils/auction.js";
@@ -24,8 +25,9 @@ export default function AuctionCard({ auction }) {
       {/* Image */}
       <div className="relative aspect-[3/2] overflow-hidden rounded-t-2xl bg-gray-100">
         <img
-          src={auction.itemPhoto || "https://picsum.photos/300"}
+          src={auction.itemPhoto || PLACEHOLDER_IMAGE}
           alt={auction.itemName}
+          onError={showPlaceholderOnError}
           className="h-full w-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
         />
         <div className="absolute top-3 left-3 flex items-center gap-2">

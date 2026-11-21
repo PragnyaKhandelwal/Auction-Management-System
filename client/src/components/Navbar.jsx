@@ -24,6 +24,7 @@ import {
 } from "react-icons/io5";
 import { RiAuctionLine } from "react-icons/ri";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
+import { UserAvatar } from "./UserAvatar.jsx";
 import { FiTarget } from "react-icons/fi";
 
 export const Navbar = () => {
@@ -206,19 +207,11 @@ const drawerItems = userRole ? getAllLinks(userRole) : navMenu;
         {user && (
           <div className="px-5 py-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center overflow-hidden">
-                {user?.user?.avatar ? (
-                  <img
-  src={user?.user?.avatar}
-  alt={user?.user?.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-bold text-brand-600">
-                   {user?.user?.name?.charAt(0)?.toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <UserAvatar
+                user={user?.user}
+                className="h-10 w-10 rounded-full shrink-0 overflow-hidden"
+                textClassName="text-sm"
+              />
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900 text-sm truncate">
                  {user?.user?.name}
