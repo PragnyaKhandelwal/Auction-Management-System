@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Notification from "../models/notification.model.js";
 
 export const getNotifications = async (req, res) => {
@@ -28,5 +29,43 @@ export const markAllRead = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating notifications", error: error.message });
+  }
+};
+
+export const markNotificationRead = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    if (typeof req.body?.read !== "boolean") {
+      return res.status(400).json({ message: "read must be a boolean" });
+    }
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { $set: { read: req.body.read } },
+      { new: true, runValidators: true },
+    );
+
+    if (!notification) {
+      return res.status(404).json({
+        message: "Notification not found",
+      });
+    }
+
+    const unread = await Notification.countDocuments({
+      user: req.user.id,
+      read: false,
+    });
+
+    res.status(200).json({ notification, unread });
+  } catch (error) {
+    if (error instanceof mongoose.CastError) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+    res
+      .status(500)
+      .json({ message: "Error updating notification", error: error.message });
   }
 };

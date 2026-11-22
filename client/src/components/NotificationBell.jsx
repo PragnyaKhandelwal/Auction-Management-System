@@ -13,7 +13,14 @@ const timeAgo = (date) => {
 };
 
 export const NotificationBell = () => {
-  const { notifications, unread, markRead } = useNotifications();
+  const {
+    notifications,
+    unread,
+    markRead,
+    setRead,
+    isMarkingAllRead,
+    isSettingRead,
+  } = useNotifications();
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -26,10 +33,7 @@ export const NotificationBell = () => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const toggle = () => {
-    if (!open && unread > 0) markRead();
-    setOpen(!open);
-  };
+  const toggle = () => setOpen((current) => !current);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -49,9 +53,19 @@ export const NotificationBell = () => {
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden z-50">
-          <p className="px-4 py-3 text-sm font-semibold text-gray-800 border-b border-gray-100">
-            Notifications
-          </p>
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-gray-800">Notifications</p>
+            {unread > 0 && (
+              <button
+                type="button"
+                onClick={() => markRead()}
+                disabled={isMarkingAllRead}
+                className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isMarkingAllRead ? "Marking…" : "Mark all read"}
+              </button>
+            )}
+          </div>
           {notifications.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-gray-400">
               Nothing yet. Outbids, wins and closing reminders appear here.
@@ -59,19 +73,34 @@ export const NotificationBell = () => {
           ) : (
             <ul className="max-h-96 overflow-y-auto divide-y divide-gray-50">
               {notifications.map((n) => (
-                <li key={n._id}>
+                <li
+                  key={n._id}
+                  className={`flex items-center hover:bg-gray-50 transition ${
+                    n.read ? "" : "bg-brand-50/60"
+                  }`}
+                >
                   <Link
                     to={n.auction ? `/auction/${n.auction}` : "#"}
                     onClick={() => setOpen(false)}
-                    className={`block px-4 py-3 hover:bg-gray-50 transition ${
-                      n.read ? "" : "bg-brand-50/60"
-                    }`}
+                    className="flex-1 min-w-0 px-4 py-3"
                   >
                     <p className="text-sm text-gray-700">{n.message}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {timeAgo(n.createdAt)}
                     </p>
                   </Link>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setRead({ notificationId: n._id, read: !n.read });
+                    }}
+                    disabled={isSettingRead}
+                    className="mr-3 shrink-0 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {n.read ? "Mark as unread" : "Mark as read"}
+                  </button>
                 </li>
               ))}
             </ul>

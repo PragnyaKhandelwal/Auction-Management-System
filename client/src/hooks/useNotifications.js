@@ -5,6 +5,7 @@ import { connectSocket } from "../config/socket.js";
 import {
   getNotifications,
   markNotificationsRead,
+  setNotificationRead,
 } from "../services/notification.service.js";
 
 export const useNotifications = () => {
@@ -25,15 +26,42 @@ export const useNotifications = () => {
     return () => socket.off("notification:new", handleNew);
   }, [queryClient]);
 
-  const { mutate: markRead } = useMutation({
+  const { mutate: markRead, isPending: isMarkingAllRead } = useMutation({
     mutationFn: markNotificationsRead,
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+
+  const { mutate: setRead, isPending: isSettingRead } = useMutation({
+    mutationFn: ({ notificationId, read }) =>
+      setNotificationRead(notificationId, read),
+    onSuccess: ({ notification, unread }) => {
+      queryClient.setQueryData(["notifications"], (current) => {
+        if (!current) return current;
+
+        return {
+          ...current,
+          unread,
+          notifications: current.notifications.map((item) =>
+            item._id === notification._id ? notification : item,
+          ),
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error) => {
+      toast.error(
+        error.response?.data?.message || "Could not update the notification",
+      );
+    },
   });
 
   return {
     notifications: query.data?.notifications ?? [],
     unread: query.data?.unread ?? 0,
     markRead,
+    setRead,
+    isMarkingAllRead,
+    isSettingRead,
   };
 };
