@@ -1,4 +1,3 @@
-import React from "react";
 import { FaBalanceScale, FaBell, FaRobot, FaStopwatch } from "react-icons/fa";
 
 const features = [

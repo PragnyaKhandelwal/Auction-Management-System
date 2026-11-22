@@ -10,7 +10,7 @@ export const checkAuth = createAsyncThunk(
       const response = await api.get(`/auth/session`);
       if (!response.data?.user) return rejectWithValue("Not authenticated");
       return response.data;
-    } catch (error) {
+    } catch {
       return rejectWithValue("Not authenticated");
     }
   },
@@ -73,7 +73,7 @@ export const logout = createAsyncThunk(
     try {
       await api.post(`/auth/logout`, {});
       return null;
-    } catch (error) {
+    } catch {
       return rejectWithValue("Logout failed");
     }
   },

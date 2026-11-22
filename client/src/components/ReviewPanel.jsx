@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useState } from "react";
 import { StarInput, StarRating } from "./StarRating.jsx";
 import { useReviewAuction } from "../hooks/useAuction.js";

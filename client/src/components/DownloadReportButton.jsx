@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { MdOutlineFileDownload } from "react-icons/md";
 
 // Button for a download mutation, with its own busy and error states

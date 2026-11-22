@@ -67,7 +67,7 @@ export default function AcceptableUsePolicy() {
               <li>Creating multiple accounts to circumvent restrictions</li>
               <li>Engaging in money laundering or fraud</li>
               <li>Collecting user information for unauthorized purposes</li>
-              <li>Interfering with other users' ability to use the platform</li>
+              <li>Interfering with other users&apos; ability to use the platform</li>
               <li>Reverse engineering or copying our software</li>
             </ul>
           </section>

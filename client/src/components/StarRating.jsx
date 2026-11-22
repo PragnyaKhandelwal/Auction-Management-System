@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useState } from "react";
 import { IoStar, IoStarOutline, IoStarHalf } from "react-icons/io5";
 

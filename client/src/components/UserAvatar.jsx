@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useState } from "react";
 
 // A user's photo, or their initial if they have none or it fails to load
