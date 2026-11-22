@@ -14,6 +14,13 @@ export default function Profile() {
   const hasPassword = user?.user?.hasPassword !== false;
   const [isError, setIsError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [showPasswords, setShowPasswords] = useState({
+  currentPassword: false,
+  newPassword: false,
+  confirmPassword: false,
+  });
+
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -211,14 +218,31 @@ export default function Profile() {
                           <CiLock className="h-5 w-5 text-gray-400" />
                         </div>
                         <input
-                          type="password"
+                          type={showPasswords.currentPassword ? "text" : "password"}
                           name="currentPassword"
                           id="currentPassword"
                           value={formData.currentPassword}
                           onChange={handleChange}
-                          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                          className="block w-full pl-10 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
                           placeholder="Enter your current password"
                         />
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowPasswords((prev) => ({
+                              ...prev,
+                              currentPassword: !prev.currentPassword,
+                            }))
+                          }
+                          className="absolute inset-y-0 right-3 text-sm font-medium text-brand-600"
+                          aria-label={
+                            showPasswords.currentPassword ? "Hide password" : "Show password"
+                          }
+                          aria-pressed={showPasswords.currentPassword}
+                        >
+                          {showPasswords.currentPassword ? "Hide" : "Show"}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -235,15 +259,31 @@ export default function Profile() {
                         <CiLock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="password"
+                        type={showPasswords.newPassword ? "text" : "password"}
                         name="newPassword"
                         id="newPassword"
                         value={formData.newPassword}
                         onChange={handleChange}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                        className="block w-full pl-10 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
                         placeholder="Enter new password"
                         minLength={8}
                       />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            newPassword: !prev.newPassword,
+                          }))
+                        }
+                        className="absolute inset-y-0 right-3 text-sm font-medium text-brand-600"
+                        aria-label={
+                          showPasswords.newPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPasswords.newPassword}
+                      >
+                        {showPasswords.newPassword ? "Hide" : "Show"}
+                      </button>
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
                       Password must be at least 8 characters long
@@ -262,14 +302,30 @@ export default function Profile() {
                         <CiLock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="password"
+                        type={showPasswords.confirmPassword ? "text" : "password"}
                         name="confirmPassword"
                         id="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                        className="block w-full pl-10 pr-16 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
                         placeholder="Confirm new password"
                       />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            confirmPassword: !prev.confirmPassword,
+                          }))
+                        }
+                        className="absolute inset-y-0 right-3 text-sm font-medium text-brand-600"
+                        aria-label={
+                          showPasswords.confirmPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPasswords.confirmPassword}
+                      >
+                        {showPasswords.confirmPassword ? "Hide" : "Show"}
+                      </button>
                     </div>
                   </div>
 
